@@ -117,7 +117,7 @@
     let inFlight = false;
 
     function lockForm(on) {
-      // ВАЖНО: файл НЕ дизейблим, иначе он не попадёт в FormData
+      // не трогаем fileInput.disabled — иначе файл не попадёт в FormData
       form.style.pointerEvents = on ? 'none' : 'auto';
       form.style.opacity = on ? '0.85' : '1';
       submitBtn.disabled = on;
@@ -133,6 +133,7 @@
       alertBox.textContent = '';
     }
 
+    // защита от двойного тапа по кнопке
     submitBtn.addEventListener('click', (e) => {
       if (inFlight) { e.preventDefault(); e.stopPropagation(); }
     }, { capture: true });
@@ -141,25 +142,37 @@
       e.preventDefault();
       if (inFlight) return;
 
+      // 1) жёстко проверяем, что есть хотя бы один файл
+      const files = fileInput.files;
+      if (!files || files.length === 0) {
+        showError('Please select at least one file.');
+        return;
+      }
+
       hideError();
       inFlight = true;
 
-      // 1) СНАЧАЛА собираем FormData (пока инпут не disabled)
+      // 2) собираем FormData ДО блокировки UI
       const meta = {
         initData: tg?.initData || "",
         user: tg?.initDataUnsafe?.user || null
       };
+      let totalBytes = 0;
+      for (const f of files) totalBytes += (f.size || 0);
+
       const fd = new FormData(form);
       fd.append("_tg_meta", JSON.stringify(meta));
+      fd.append("_debug_file_count", String(files.length));
+      fd.append("_debug_total_bytes", String(totalBytes));
 
-      // 2) Теперь можно блокировать UI
+      // 3) теперь можно блокировать UI
       lockForm(true);
 
       try {
         const res = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
         if (!res.ok) throw new Error('Upload failed');
 
-        // успех: убираем форму, показываем thanks
+        // успех: прячем форму, показываем Thanks
         const container = form.parentElement;
         form.remove();
         const done = document.createElement('div');
@@ -171,6 +184,7 @@
         container.appendChild(done);
         document.getElementById('back2')?.addEventListener('click', () => location.href = "./");
       } catch (err) {
+        // ошибка: разблокируем и даём попробовать снова
         showError('Error. Please try again.');
         inFlight = false;
         lockForm(false);
