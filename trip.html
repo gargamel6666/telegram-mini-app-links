@@ -1,331 +1,461 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Trip report</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root{
-    --bg: var(--tg-theme-secondary-bg-color, #0f1220);
-    --text: var(--tg-theme-text-color, #e6e6e6);
-    --muted: var(--tg-theme-hint-color, #9aa3b2);
-    --accent: var(--tg-theme-button-color, #4e8cff);
-    --accentText: var(--tg-theme-button-text-color, #fff);
-    --card: rgba(255,255,255,0.06);
-    --stroke: rgba(255,255,255,0.12);
-    --shadow: 0 10px 30px rgba(0,0,0,0.25);
-    --radius: 18px;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
-  body{
-    margin:0; color:var(--text);
-    font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    background:
-      radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
-      radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
-      var(--bg);
-    display:grid; place-items:start center; padding:16px;
-  }
-  main.card{
-    width:100%; max-width:720px; background:var(--card);
-    border:1px solid var(--stroke); border-radius:var(--radius);
-    box-shadow:var(--shadow); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-    padding:20px; margin-top:12px;
-  }
-  h1{font-size:20px; margin:0 0 2px}
-  .sub{color:var(--muted); font-size:13px; margin-bottom:8px}
-  .step-title{font-weight:700; margin:14px 0 8px}
-  label{display:block; font-size:14px; margin:10px 0 6px}
-  input,select,textarea{
-    width:100%; padding:12px 12px; border-radius:12px;
-    border:1px solid var(--stroke); background:rgba(255,255,255,0.05); color:var(--text);
-    outline:none;
-  }
-  .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
-  .btn{
-    margin-top:14px; width:100%; border-radius:14px; padding:14px 16px;
-    border:1px solid var(--stroke); background:var(--accent); color:var(--accentText);
-    font-weight:700; cursor:pointer; transition:transform .12s ease;
-  }
-  .btn.secondary{background:transparent; color:var(--text)}
-  .btn.small{width:auto; padding:8px 12px; border-radius:10px; font-weight:600}
-  .actions{display:flex; gap:10px; margin-top:14px}
-  .table{border:1px solid var(--stroke); border-radius:12px; overflow:hidden}
-  .thead,.trow{display:grid; grid-template-columns:1.2fr 1.2fr 1.2fr .7fr .7fr auto; gap:6px; padding:8px}
-  .thead{background:rgba(255,255,255,0.04); font-weight:700; font-size:13px}
-  .trow{align-items:center; border-top:1px solid var(--stroke)}
-  .muted{color:var(--muted); font-size:12px}
-  .alert{display:none; margin-top:10px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,107,107,0.12); color:#ffd7d7; font-size:13px}
-  .ok{display:none; margin-top:10px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); background: rgba(100,255,160,0.12); color:#c8ffd7; font-size:13px}
-  .hidden{display:none}
-  .spacer{height:6px}
-  .right{justify-self:end}
-</style>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Trip report</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg: var(--tg-theme-secondary-bg-color, #0f1220);
+      --text: var(--tg-theme-text-color, #e6e6e6);
+      --muted: var(--tg-theme-hint-color, #9aa3b2);
+      --accent: var(--tg-theme-button-color, #4e8cff);
+      --accentText: var(--tg-theme-button-text-color, #fff);
+      --card: rgba(255,255,255,0.06);
+      --stroke: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 18px;
+      --danger: #ff6b6b;
+      --good: #10b981;
+    }
+    *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
+      display:grid; place-items:start center;
+      padding:clamp(12px, 2.8vw, 18px);
+      padding-top: calc(12px + env(safe-area-inset-top));
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .card{
+      width:100%;
+      max-width: 720px;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding:18px;
+    }
+    h1{ font-size:20px; margin:0 0 6px; }
+    .sub{ color:var(--muted); font-size:13px; margin-bottom:14px; }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    .label{ font-weight:600; font-size:13px; }
+    input, select, button{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.05);
+      color:var(--text);
+      border-radius: 14px;
+      padding: 12px 12px;
+      min-height: 44px;
+      outline: none;
+    }
+    input[type="number"]{ -moz-appearance: textfield; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button{ -webkit-appearance: none; margin:0; }
+
+    .btn{
+      border:1px solid var(--stroke);
+      background:var(--accent);
+      color:var(--accentText);
+      font-weight:700; border-radius:14px; padding:14px 16px;
+      cursor:pointer; transition:transform .12s ease;
+    }
+    .btn.secondary{ background:transparent; color:var(--text); }
+    .btn:active{ transform:translateY(1px); }
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .row .btn{ flex:1 1 48%; }
+    .danger{ color:var(--danger); }
+    .ok{ color:var(--good); }
+    .alert{
+      display:none; margin:10px 0 0; padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15); background: rgba(255,107,107,0.12);
+      color:#ffd7d7; font-size:13px;
+    }
+
+    /* Loads/Expenses table (mobile-friendly: horizontal scroll) */
+    .table{
+      margin-top:8px; border:1px solid var(--stroke); border-radius:14px; overflow:hidden;
+      background: rgba(255,255,255,0.03);
+    }
+    .thead, .trow{
+      display:grid; gap:8px; padding:10px;
+      grid-template-columns: 120px 1fr 1fr 70px 70px 86px; /* date, pickup, delivery, partial, tarp, remove */
+      min-width: 660px; /* enable horizontal scroll on small screens */
+    }
+    .thead{ font-weight:700; font-size:13px; color:var(--muted); background:rgba(255,255,255,0.04); }
+    .trow + .trow{ border-top:1px solid var(--stroke); }
+    .table-wrap{ overflow-x:auto; border-radius:14px; }
+
+    .switch{
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      border:1px solid var(--stroke); border-radius:12px; padding:8px 10px; height:44px;
+    }
+    .switch input{ width:auto; min-height: auto; }
+    .ghost{ background:transparent; color:var(--text); border:1px dashed var(--stroke); }
+    .muted{ color:var(--muted); }
+
+    .review h3{ margin:14px 0 6px; font-size:16px; }
+    .list{ margin:6px 0 2px; padding-left:16px; }
+    .list li{ margin:6px 0; }
+
+    @media (max-width:640px){
+      .grid-2{ grid-template-columns: 1fr; }
+      .row .btn{ flex:1 1 100%; }
+    }
+  </style>
 </head>
 <body>
   <main class="card">
     <h1>Trip report</h1>
-    <div class="sub">Заполни поездку, загрузки и расходы. Телеграм-ID подхватим автоматически.</div>
+    <div class="sub">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</div>
 
-    <!-- Step 1 -->
+    <!-- STEP 1: Trip -->
     <section id="step1">
-      <div class="step-title">Trip start</div>
-      <label>Start location</label>
-      <input id="start_loc" placeholder="City, ST" />
+      <div class="label muted" style="margin:8px 0 6px;">Trip start</div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="label">Start location</div>
+          <input id="start_location" placeholder="City, ST">
+        </div>
+        <div class="field">
+          <div class="label">Date</div>
+          <input id="start_date" type="date" inputmode="none">
+        </div>
+        <div class="field">
+          <div class="label">Start mileage <span class="danger">*</span></div>
+          <input id="start_mileage" type="number" inputmode="numeric" placeholder="0" required>
+        </div>
+      </div>
+
+      <div class="label muted" style="margin:16px 0 6px;">Trip finish</div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="label">Finish location</div>
+          <input id="finish_location" placeholder="City, ST">
+        </div>
+        <div class="field">
+          <div class="label">Date</div>
+          <input id="finish_date" type="date" inputmode="none">
+        </div>
+        <div class="field">
+          <div class="label">Finish mileage <span class="danger">*</span></div>
+          <input id="finish_mileage" type="number" inputmode="numeric" placeholder="0" required>
+        </div>
+      </div>
+
+      <div class="alert" id="a1"></div>
+      <div class="row">
+        <button class="btn" id="next1">Next → Loads</button>
+        <button class="btn secondary" id="toMenu1" type="button">Back to menu</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: Loads -->
+    <section id="step2" hidden>
+      <div class="label">Loads</div>
+      <div class="sub">Add rows as needed.</div>
+
+      <div class="table-wrap">
+        <div class="table" id="loadsTable">
+          <div class="thead">
+            <div>Date</div><div>Pickup location</div><div>Delivery location</div>
+            <div>Partial</div><div>Tarp</div><div></div>
+          </div>
+          <!-- rows here -->
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="btn ghost" id="addLoad" type="button">+ Add load</button>
+      </div>
 
       <div class="row">
-        <div>
-          <label>Date</label>
-          <input id="start_date" type="date" />
-        </div>
-        <div>
-          <label>Start mileage *</label>
-          <input id="start_mi" type="number" min="0" required />
+        <button class="btn" id="next2">Next → Expenses</button>
+        <button class="btn secondary" id="back2" type="button">← Back</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Expenses -->
+    <section id="step3" hidden>
+      <div class="label">Expenses</div>
+      <div class="sub">Add rows as needed.</div>
+
+      <div class="table-wrap">
+        <div class="table" id="expTable">
+          <div class="thead" style="grid-template-columns: 1fr 140px 86px; min-width: 420px;">
+            <div>Name</div><div>Price</div><div></div>
+          </div>
         </div>
       </div>
 
-      <div class="step-title">Trip finish</div>
-      <label>Finish location</label>
-      <input id="finish_loc" placeholder="City, ST" />
+      <div class="row" style="margin-top:12px;">
+        <button class="btn ghost" id="addExp" type="button">+ Add expense</button>
+      </div>
 
       <div class="row">
-        <div>
-          <label>Date</label>
-          <input id="finish_date" type="date" />
-        </div>
-        <div>
-          <label>Finish mileage *</label>
-          <input id="finish_mi" type="number" min="0" required />
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="toLoads" class="btn">Next → Loads</button>
-        <button id="backMenu1" class="btn secondary" type="button">Back to menu</button>
+        <button class="btn" id="next3">Next → Review</button>
+        <button class="btn secondary" id="back3" type="button">← Back</button>
       </div>
     </section>
 
-    <!-- Step 2: Loads -->
-    <section id="step2" class="hidden">
-      <div class="step-title">Loads</div>
-      <div class="muted">Добавляй строки по мере необходимости.</div>
+    <!-- STEP 4: Review -->
+    <section id="step4" hidden>
+      <div class="label">Review & submit</div>
+      <div id="review" class="review"></div>
 
-      <div class="table" id="loadsTable">
-        <div class="thead">
-          <div>Date</div><div>Pickup location</div><div>Delivery location</div><div>Partial</div><div>Tarp</div><div></div>
-        </div>
-        <!-- rows mount here -->
-      </div>
-      <div class="spacer"></div>
-      <button id="addLoad" class="btn small">+ Add load</button>
-
-      <div class="actions">
-        <button id="toExpenses" class="btn">Next → Expenses</button>
-        <button id="back1" class="btn secondary">← Back</button>
+      <div class="alert" id="a4"></div>
+      <div class="row">
+        <button class="btn" id="submitBtn">Submit</button>
+        <button class="btn secondary" id="back4" type="button">← Back</button>
       </div>
     </section>
 
-    <!-- Step 3: Expenses -->
-    <section id="step3" class="hidden">
-      <div class="step-title">Expenses</div>
-      <div class="muted">Добавляй строки по мере необходимости.</div>
-
-      <div class="table" id="expTable">
-        <div class="thead" style="grid-template-columns:2fr 1fr auto;">
-          <div>Name</div><div>Price</div><div></div>
-        </div>
-        <!-- rows -->
-      </div>
-      <div class="spacer"></div>
-      <button id="addExp" class="btn small">+ Add expense</button>
-
-      <div class="actions">
-        <button id="toReview" class="btn">Next → Review</button>
-        <button id="back2" class="btn secondary">← Back</button>
+    <!-- DONE -->
+    <section id="done" hidden>
+      <div class="ok" style="font-weight:700; margin-bottom:8px;">Thanks! Your report has been sent.</div>
+      <div class="sub">You can close this window or return to the menu.</div>
+      <div class="row">
+        <button class="btn secondary" id="toMenuDone" type="button">Back to menu</button>
       </div>
     </section>
-
-    <!-- Step 4: Review -->
-    <section id="step4" class="hidden">
-      <div class="step-title">Review & submit</div>
-      <div id="reviewBox" class="muted" style="white-space:pre-wrap;border:1px solid var(--stroke);border-radius:12px;padding:12px;background:rgba(255,255,255,0.03)"></div>
-
-      <div class="actions">
-        <button id="submit" class="btn">Submit</button>
-        <button id="back3" class="btn secondary">← Back</button>
-      </div>
-    </section>
-
-    <div id="alert" class="alert"></div>
-    <div id="ok" class="ok"></div>
   </main>
 
-<script>
-const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+  <script>
+    const tg = window.Telegram?.WebApp;
+    tg?.ready(); tg?.expand();
 
-const WEBHOOK = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235"; // <- n8n webhook
+    const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235"; // <-- при необходимости поменяй
 
-const $ = sel => document.querySelector(sel);
-const create = (tag, attrs={}) => Object.assign(document.createElement(tag), attrs);
+    // --- state ---
+    const state = {
+      trip: {
+        start_location: "", start_date: "", start_mileage: "",
+        finish_location: "", finish_date: "", finish_mileage: ""
+      },
+      loads: [],
+      expenses: [],
+      client_token: ""   // anti double submit
+    };
 
-// Simple nav between steps
-const steps = [$('#step1'), $('#step2'), $('#step3'), $('#step4')];
-let current = 0;
-function go(i){ steps[current].classList.add('hidden'); current=i; steps[current].classList.remove('hidden'); window.scrollTo({top:0,behavior:'instant'}); }
-$('#toLoads').onclick = () => {
-  if (!validateStep1()) return;
-  go(1);
-};
-$('#toExpenses').onclick = () => go(2);
-$('#toReview').onclick = () => { buildReview(); go(3); };
-$('#back1').onclick = () => go(0);
-$('#back2').onclick = () => go(1);
-$('#back3').onclick = () => go(2);
-$('#backMenu1').onclick = () => location.href = "./"; // твой индекс-меню
+    // helpers
+    const $ = sel => document.querySelector(sel);
+    const el = (t, cls) => { const n = document.createElement(t); if (cls) n.className = cls; return n; };
+    const show = id => {
+      ["step1","step2","step3","step4","done"].forEach(s => $( '#'+s ).hidden = (s!==id));
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
+    const err = (id, msg="") => { const a=$(id); a.textContent = msg; a.style.display = msg? "block":"none"; };
 
-// Loads table
-const loadsTable = $('#loadsTable');
-function addLoadRow(row={}) {
-  const wrapper = create('div', { className:'trow' });
-  wrapper.style.gridTemplateColumns = '1.2fr 1.2fr 1.2fr .7fr .7fr auto';
+    // anti double submit token
+    function getToken() {
+      const uid = tg?.initDataUnsafe?.user?.id || 'anon';
+      return `${uid}_${Date.now()}`;
+    }
 
-  const d = create('input', { type:'date', value: row.date||'' });
-  const p = create('input', { placeholder:'Pickup' , value: row.pickup||'' });
-  const q = create('input', { placeholder:'Delivery', value: row.delivery||'' });
-  const partial = create('select'); partial.innerHTML = '<option value=""></option><option>No</option><option>Yes</option>'; partial.value=row.partial||'';
-  const tarp    = create('select'); tarp.innerHTML    = '<option value=""></option><option>No</option><option>Yes</option>'; tarp.value=row.tarp||'';
-  const del = create('button', { className:'btn small secondary right', type:'button', textContent:'Remove' });
-  del.onclick = () => wrapper.remove();
+    // --- loads table row ---
+    function loadRow(data={}){
+      const row = el('div','trow');
+      row.innerHTML = `
+        <input type="date" placeholder="MM/DD/YYYY" value="${data.date||''}">
+        <input type="text" placeholder="City, ST" value="${data.pickup||''}">
+        <input type="text" placeholder="City, ST" value="${data.delivery||''}">
+        <div class="switch"><label><input type="checkbox" ${data.partial?'checked':''}></label><span>Yes</span></div>
+        <div class="switch"><label><input type="checkbox" ${data.tarp?'checked':''}></label><span>Yes</span></div>
+        <button class="btn secondary" type="button">Remove</button>
+      `;
+      row.querySelector('button').onclick = () => row.remove();
+      return row;
+    }
 
-  [d,p,q,partial,tarp,del].forEach(el => wrapper.appendChild(el));
-  loadsTable.appendChild(wrapper);
-}
-addLoadRow(); // first visible
+    // --- expense row ---
+    function expRow(data={}){
+      const row = el('div','trow');
+      row.style.gridTemplateColumns = '1fr 140px 86px';
+      row.style.minWidth = '420px';
+      row.innerHTML = `
+        <input type="text" placeholder="Name" value="${data.name||''}">
+        <input type="number" step="0.01" placeholder="0.00" value="${data.price||''}">
+        <button class="btn secondary" type="button">Remove</button>
+      `;
+      row.querySelector('button').onclick = () => row.remove();
+      return row;
+    }
 
-$('#addLoad').onclick = () => addLoadRow();
+    // prepare first blank rows
+    $("#loadsTable").appendChild(loadRow());
+    $("#expTable").appendChild(expRow());
 
-// Expenses table
-const expTable = $('#expTable');
-function addExpRow(row={}) {
-  const wrapper = create('div', { className:'trow' });
-  wrapper.style.gridTemplateColumns = '2fr 1fr auto';
-  const name  = create('input', { placeholder:'Name', value: row.name||'' });
-  const price = create('input', { type:'number', min:'0', step:'0.01', placeholder:'0.00', value: row.price||'' });
-  const del = create('button', { className:'btn small secondary right', type:'button', textContent:'Remove' });
-  del.onclick = () => wrapper.remove();
-  [name, price, del].forEach(el => wrapper.appendChild(el));
-  expTable.appendChild(wrapper);
-}
-addExpRow();
+    // add buttons
+    $("#addLoad").onclick = () => $("#loadsTable").appendChild(loadRow());
+    $("#addExp").onclick  = () => $("#expTable").appendChild(expRow());
 
-$('#addExp').onclick = () => addExpRow();
+    // step 1 -> 2
+    $("#next1").onclick = () => {
+      state.trip.start_location = $("#start_location").value.trim();
+      state.trip.start_date     = $("#start_date").value;
+      state.trip.start_mileage  = $("#start_mileage").value.trim();
+      state.trip.finish_location= $("#finish_location").value.trim();
+      state.trip.finish_date    = $("#finish_date").value;
+      state.trip.finish_mileage = $("#finish_mileage").value.trim();
 
-function getLoads(){
-  const rows = [...loadsTable.querySelectorAll('.trow')].slice(1); // skip header row
-  return rows.map(r => {
-    const [d,p,q,partial,tarp] = r.querySelectorAll('input,select');
-    return { date:d.value, pickup:p.value, delivery:q.value, partial:partial.value, tarp:tarp.value };
-  }).filter(x => Object.values(x).some(v => String(v||'').trim() !== ''));
-}
-function getExpenses(){
-  const rows = [...expTable.querySelectorAll('.trow')].slice(1);
-  return rows.map(r=>{
-    const [name,price] = r.querySelectorAll('input');
-    return { name:name.value, price:price.value };
-  }).filter(x => (x.name||x.price));
-}
+      if(!state.trip.start_mileage || !state.trip.finish_mileage){
+        return err("#a1","Start mileage and Finish mileage are required.");
+      }
+      err("#a1","");
+      show("step2");
+    };
+    $("#toMenu1").onclick = () => location.href = "./";
 
-function validateStep1(){
-  const startMi = Number($('#start_mi').value);
-  const finishMi = Number($('#finish_mi').value);
-  if (!Number.isFinite(startMi) || startMi < 0) return err('Start mileage is required');
-  if (!Number.isFinite(finishMi) || finishMi < 0) return err('Finish mileage is required');
-  return true;
-}
+    // step 2 -> 3
+    $("#next2").onclick = () => {
+      // collect loads (only non-empty rows)
+      state.loads = [];
+      [...$("#loadsTable").querySelectorAll(".trow")].forEach(r=>{
+        const [date,pick,del,partial,tarp] = r.querySelectorAll("input");
+        const row = {
+          date: date.value,
+          pickup: pick.value.trim(),
+          delivery: del.value.trim(),
+          partial: partial.checked || false,
+          tarp: tarp.checked || false
+        };
+        if(row.date || row.pickup || row.delivery || row.partial || row.tarp){
+          state.loads.push(row);
+        }
+      });
+      show("step3");
+    };
+    $("#back2").onclick = () => show("step1");
 
-// Review box
-function buildReview(){
-  const payload = collectPayload();
-  $('#reviewBox').textContent = JSON.stringify(payload, null, 2);
-}
+    // step 3 -> 4
+    $("#next3").onclick = () => {
+      state.expenses = [];
+      [...$("#expTable").querySelectorAll(".trow")].forEach(r=>{
+        const [name, price] = r.querySelectorAll("input");
+        const row = {
+          name: name.value.trim(),
+          price: price.value ? Number(price.value) : 0
+        };
+        if(row.name || row.price>0){ state.expenses.push(row); }
+      });
+      buildReview(); // only user-entered fields
+      show("step4");
+    };
+    $("#back3").onclick = () => show("step2");
 
-function collectPayload(){
-  const meta = {
-    initData: tg?.initData || "",
-    user: tg?.initDataUnsafe?.user || null
-  };
-  const trip = {
-    start_location: $('#start_loc').value,
-    start_date: $('#start_date').value,
-    start_mileage: Number($('#start_mi').value||0),
-    finish_location: $('#finish_loc').value,
-    finish_date: $('#finish_date').value,
-    finish_mileage: Number($('#finish_mi').value||0),
-  };
-  return {
-    _tg_meta: meta,
-    trip,
-    loads: getLoads(),
-    expenses: getExpenses(),
-    client_token: getClientToken() // защита от дабл-кликов/повторов
-  };
-}
+    // Build nice review (ONLY filled values)
+    function buildReview(){
+      const wrap = $("#review");
+      wrap.innerHTML = "";
 
-// --- one-shot отправка: лок локально + in-flight ---
-let inFlight = false;
-function lock(on){
-  inFlight = on;
-  $('#submit').disabled = on;
-  $('#submit').textContent = on ? 'Submitting…' : 'Submit';
-}
-function err(m){ const a=$('#alert'); a.textContent=m; a.style.display='block'; setTimeout(()=>a.style.display='none', 5000); return false; }
-function ok(m){ const o=$('#ok'); o.textContent=m; o.style.display='block'; }
+      const t = state.trip;
+      const s1 = el('div');
+      s1.innerHTML = `
+        <h3>Trip</h3>
+        <ul class="list">
+          ${t.start_location? `<li><b>Start:</b> ${t.start_location}${t.start_date?` — ${t.start_date}`:''}, mileage: <b>${t.start_mileage}</b></li>` : `<li><b>Start mileage:</b> ${t.start_mileage}</li>`}
+          ${t.finish_location? `<li><b>Finish:</b> ${t.finish_location}${t.finish_date?` — ${t.finish_date}`:''}, mileage: <b>${t.finish_mileage}</b></li>` : `<li><b>Finish mileage:</b> ${t.finish_mileage}</li>`}
+        </ul>`;
+      wrap.appendChild(s1);
 
-const LS_KEY = 'trip_lock_v1';
-function getClientToken(){
-  const uid = tg?.initDataUnsafe?.user?.id || 'anon';
-  const now = Date.now();
-  // 30сек блок по пользователю
-  const last = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-  if (last[uid] && (now - last[uid] < 30_000)) return last._token || String(last[uid]);
-  const token = `${uid}_${now}`;
-  localStorage.setItem(LS_KEY, JSON.stringify({[uid]: now, _token: token}));
-  return token;
-}
+      if(state.loads.length){
+        const s2 = el('div');
+        s2.innerHTML = `<h3>Loads</h3>`;
+        const ul = el('ul','list');
+        state.loads.forEach((l,i)=>{
+          const line = [
+            l.date ? `${l.date}:` : null,
+            (l.pickup||"").trim(),
+            (l.delivery||"").trim() ? `→ ${l.delivery.trim()}` : null,
+            l.partial ? "(partial)" : null,
+            l.tarp ? "(tarp)" : null,
+          ].filter(Boolean).join(' ');
+          const li = el('li'); li.textContent = line || `Load #${i+1}`;
+          ul.appendChild(li);
+        });
+        s2.appendChild(ul);
+        wrap.appendChild(s2);
+      }
 
-$('#submit').onclick = async () => {
-  if (inFlight) return;
-  if (!validateStep1()) return;
+      if(state.expenses.length){
+        const s3 = el('div');
+        s3.innerHTML = `<h3>Expenses</h3>`;
+        const ul = el('ul','list');
+        state.expenses.forEach(e=>{
+          const li = el('li');
+          li.textContent = `${e.name || 'Expense'} — $${(e.price||0).toFixed(2)}`;
+          ul.appendChild(li);
+        });
+        s3.appendChild(ul);
+        wrap.appendChild(s3);
+      }
+    }
 
-  const payload = collectPayload();
-  lock(true);
+    $("#back4").onclick = () => show("step3");
 
-  try{
-    const r = await fetch(WEBHOOK, {
-      method:'POST',
-      headers:{ 'content-type':'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!r.ok) throw new Error('Bad HTTP');
-    $('main .card'); // no-op for style scanners
-    ok('Thanks! Your trip was submitted.');
-    // прячем всё и показываем только кнопку назад
-    steps.forEach(s=>s.classList.add('hidden'));
-    const done = document.createElement('div');
-    done.innerHTML = `
-      <div class="step-title">All set ✅</div>
-      <div class="muted">You can go back to menu.</div>
-      <div class="actions"><button class="btn secondary" onclick="location.href='./'">Back to menu</button></div>
-    `;
-    document.querySelector('main.card').appendChild(done);
-  }catch(e){
-    err('Error. Please try again in ~30 seconds.');
-    lock(false);
-  }
-};
-</script>
+    // Submit
+    let inFlight = false;
+    $("#submitBtn").onclick = async () => {
+      if(inFlight) return;
+      inFlight = true;
+
+      err("#a4","");
+      const meta = {
+        initData: tg?.initData || "",
+        user: tg?.initDataUnsafe?.user || null
+      };
+      state.client_token = getToken();
+
+      const payload = {
+        _tg_meta: meta,
+        trip: state.trip,
+        loads: state.loads,
+        expenses: state.expenses,
+        client_token: state.client_token
+      };
+
+      // lock UI
+      $("#submitBtn").textContent = "Sending…";
+      $("#submitBtn").disabled = true;
+
+      try{
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error("Upload failed");
+        show("done");
+      }catch(e){
+        err("#a4","Error. Please try again.");
+        $("#submitBtn").textContent = "Submit";
+        $("#submitBtn").disabled = false;
+        inFlight = false;
+      }
+    };
+
+    // menu buttons
+    $("#toMenu1").onclick = () => location.href="./";
+    $("#toMenuDone").onclick = () => location.href="./";
+  </script>
 </body>
 </html>
