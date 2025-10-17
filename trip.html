@@ -1,466 +1,435 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Trip report</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root{
-      --bg: var(--tg-theme-secondary-bg-color, #0f1220);
-      --text: var(--tg-theme-text-color, #e6e6e6);
-      --muted: var(--tg-theme-hint-color, #9aa3b2);
-      --accent: var(--tg-theme-button-color, #4e8cff);
-      --accentText: var(--tg-theme-button-text-color, #fff);
-      --card: rgba(255,255,255,0.06);
-      --stroke: rgba(255,255,255,0.12);
-      --shadow: 0 10px 30px rgba(0,0,0,0.25);
-      --radius: 18px;
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
-        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
-        var(--bg);
-      display: grid;
-      place-items: start center;
-      padding: 16px env(safe-area-inset-right) calc(16px + env(safe-area-inset-bottom)) env(safe-area-inset-left);
-    }
-    main {
-      width: 100%;
-      max-width: 680px;
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: 18px;
-    }
-    h1 { margin: 6px 0 10px; font-size: 22px; }
-    h2 { margin: 0 0 10px; font-size: 20px; }
-    h3 { margin: 10px 0 6px; font-size: 16px; }
-    .muted { color: var(--muted); }
-    .step[hidden] { display: none; }
-
-    .field { display: grid; gap: 6px; margin: 10px 0; }
-    label { font-size: 13px; color: var(--muted); }
-    input, .input {
-      width: 100%; padding: 12px 12px;
-      border-radius: 12px; border: 1px solid var(--stroke);
-      background: rgba(255,255,255,.05); color: var(--text);
-      font-size: 15px; line-height: 1.2;
-    }
-    /* одинаковая ширина/внешний вид дат на iOS */
-    input[type="date"] {
-      -webkit-appearance: none; appearance: none;
-      width: 100%; padding: 12px 12px; min-height: 46px;
-      background-position: right 12px center;
-      background-repeat: no-repeat;
-    }
-    input[type="number"] { -moz-appearance:textfield; }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-    .row { display: flex; gap: 10px; margin-top: 12px; }
-    .row.gap { justify-content: space-between; flex-wrap: wrap; }
-
-    .btn {
-      display:inline-flex; align-items:center; justify-content:center;
-      padding: 12px 16px; border-radius: 14px; border: 1px solid var(--stroke);
-      background: var(--accent); color: var(--accentText); font-weight: 700; cursor: pointer;
-    }
-    .btn.ghost { background: transparent; color: var(--text); }
-    .btn[disabled]{ opacity:.6; cursor: default; }
-
-    /* chips & card for loads */
-    .chips{display:flex; gap:8px; overflow:auto; padding:4px 0 8px;}
-    .chip{
-      padding:6px 10px; border:1px solid var(--stroke); border-radius:12px;
-      background:rgba(255,255,255,.06); font-size:13px; cursor:pointer; white-space:nowrap;
-    }
-    .chip.active{background:var(--accent); color:var(--accentText); border-color:transparent}
-    .card{border:1px solid var(--stroke); border-radius:14px; padding:12px; background:rgba(255,255,255,.05)}
-    .grid2{display:grid; grid-template-columns:1fr; gap:12px}
-    @media (min-width:900px){ .grid2{ grid-template-columns:1fr 1fr; } }
-
-    pre {
-      background: rgba(0,0,0,.35); padding: 12px; border-radius: 12px; overflow:auto;
-      border:1px solid var(--stroke);
-    }
-    .ok, .err {
-      margin-top: 12px; padding: 12px; border-radius: 12px; font-size: 14px;
-      border:1px solid var(--stroke);
-    }
-    .ok { background: rgba(34,197,94,.12); color:#b7ffcf; }
-    .err{ background: rgba(244,63,94,.12); color:#ffd7d7; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Trip report</title>
+<!-- Telegram WebApp SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0f1115; --card:#1a1f2b; --muted:#8fa0b9; --text:#e7edf7;
+    --primary:#3b82f6; --primary-600:#2563eb; --err:#f43f5e;
+    --radius:16px;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:16px/1.35 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Inter,Arial;}
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 32px;}
+  h1{margin:0 0 8px 0;font-size:28px}
+  .sub{color:var(--muted);margin:0 0 18px 0}
+  .section{background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);padding:16px;border-radius:24px;border:1px solid rgba(255,255,255,.06);box-shadow:0 8px 32px rgba(0,0,0,.35)}
+  .title{font-weight:700;font-size:22px;margin:0 0 6px}
+  .hint{color:var(--muted);margin:0 0 16px}
+  .row{display:flex;gap:12px}
+  .gap{margin-top:12px}
+  .grid{display:grid;gap:12px}
+  .grid-2{grid-template-columns:1fr 1fr}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:14px}
+  label{display:block;margin:4px 2px 6px 2px;color:var(--muted);font-size:13px}
+  input,select,textarea{
+    width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);
+    background:#151925;color:var(--text);border-radius:14px;
+    padding:14px 14px;outline:none;font-size:16px
+  }
+  input[type="date"]{appearance:none;-webkit-appearance:none}
+  .btn{background:var(--primary);color:white;border:none;border-radius:14px;padding:14px 18px;font-weight:600}
+  .btn:active{transform:translateY(1px)}
+  .ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text)}
+  .err{color:var(--err);margin:6px 2px 0 2px;font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .chip{background:#0e1423;border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:999px;padding:8px 12px;font-weight:600}
+  .footer{display:flex;gap:12px;justify-content:space-between;margin-top:16px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;background:#0c0f17;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;white-space:pre-wrap}
+  [hidden]{display:none !important}
+</style>
 </head>
 <body>
-<main>
-  <h1>Trip report</h1>
-  <p class="muted">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</p>
+<div class="wrap">
 
   <!-- STEP 1: Trip -->
-  <section id="step-trip" class="step">
-    <h3>Trip start</h3>
-    <div class="grid2">
-      <div class="field">
+  <section id="step_trip" class="section">
+    <div class="title">Trip report</div>
+    <p class="hint">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</p>
+
+    <div class="grid">
+      <div class="card">
         <label>Start location</label>
         <input id="start_location" placeholder="City, ST">
       </div>
-      <div class="field">
-        <label>Date</label>
-        <input id="start_date" type="date">
+      <div class="grid grid-2">
+        <div class="card">
+          <label>Start date</label>
+          <input id="start_date" type="date">
+        </div>
+        <div class="card">
+          <label>Start mileage *</label>
+          <input id="start_mileage" type="number" min="0" step="1" required>
+        </div>
       </div>
-      <div class="field">
-        <label>Start mileage *</label>
-        <input id="start_mileage" type="number" inputmode="numeric" min="0" required>
-      </div>
-    </div>
 
-    <h3>Trip finish</h3>
-    <div class="grid2">
-      <div class="field">
+      <div class="card">
         <label>Finish location</label>
         <input id="finish_location" placeholder="City, ST">
       </div>
-      <div class="field">
-        <label>Date</label>
-        <input id="finish_date" type="date">
-      </div>
-      <div class="field">
-        <label>Finish mileage *</label>
-        <input id="finish_mileage" type="number" inputmode="numeric" min="0" required>
+      <div class="grid grid-2">
+        <div class="card">
+          <label>Finish date</label>
+          <input id="finish_date" type="date">
+        </div>
+        <div class="card">
+          <label>Finish mileage *</label>
+          <input id="finish_mileage" type="number" min="0" step="1" required>
+        </div>
       </div>
     </div>
 
     <div id="trip_err" class="err" hidden></div>
 
-    <div class="row">
-      <button class="btn primary" type="button" onclick="goStep('loads')">Next → Loads</button>
+    <div class="footer">
+      <button class="btn" type="button" onclick="goStep('loads')">Next → Loads</button>
       <button class="btn ghost" type="button" onclick="backToMenu()">Back to menu</button>
     </div>
   </section>
 
   <!-- STEP 2: Loads -->
-  <section id="step-loads" class="step" hidden>
-    <h3>Loads</h3>
-    <p class="muted">Add rows as needed.</p>
+  <section id="step_loads" class="section" hidden>
+    <div class="title">Loads</div>
+    <p class="hint">Add rows as needed.</p>
 
     <div id="loadChips" class="chips"></div>
     <div id="loadCard" class="card"></div>
-    
-    <div id="loads_err" class="err" hidden></div>
 
+    <div id="loads_err" class="err" hidden></div>
 
     <div class="row gap">
       <button class="btn ghost" type="button" onclick="removeCurrentLoad()">Remove load</button>
       <button class="btn" type="button" onclick="addLoad()">+ Add load</button>
     </div>
 
-    <div class="row">
-      <button class="btn primary" type="button" onclick="goStep('expenses')">Next → Expenses</button>
+    <div class="footer">
+      <button class="btn" type="button" onclick="goStep('expenses')">Next → Expenses</button>
       <button class="btn ghost" type="button" onclick="goStep('trip')">← Back</button>
     </div>
   </section>
 
   <!-- STEP 3: Expenses -->
-  <section id="step-expenses" class="step" hidden>
-    <h3>Expenses</h3>
-    <p class="muted">Add rows as needed.</p>
+  <section id="step_expenses" class="section" hidden>
+    <div class="title">Expenses</div>
+    <p class="hint">Add rows as needed.</p>
 
-    <div id="expWrap"></div>
-
+    <div id="expenseList"></div>
     <div class="row gap">
-      <button class="btn ghost" type="button" onclick="removeExpense()">Remove expense</button>
       <button class="btn" type="button" onclick="addExpense()">+ Add expense</button>
     </div>
 
-    <div class="row">
-      <button class="btn primary" type="button" onclick="goStep('review')">Next → Review</button>
+    <div class="footer">
+      <button class="btn" type="button" onclick="goStep('review')">Next → Review</button>
       <button class="btn ghost" type="button" onclick="goStep('loads')">← Back</button>
     </div>
   </section>
 
   <!-- STEP 4: Review -->
-  <section id="step-review" class="step" hidden>
-    <h3>Review & submit</h3>
-    <pre id="reviewBox"></pre>
+  <section id="step_review" class="section" hidden>
+    <div class="title">Review & submit</div>
+    <div id="reviewBox" class="mono"></div>
 
-    <div id="result" class=""></div>
+    <div id="submit_err" class="err" hidden></div>
 
-    <div class="row">
-      <button id="submitBtn" class="btn primary" type="button" onclick="submitTrip()">Submit</button>
+    <div class="footer">
+      <button id="submitBtn" class="btn" type="button" onclick="submitTrip()">Submit</button>
       <button class="btn ghost" type="button" onclick="goStep('expenses')">← Back</button>
     </div>
   </section>
-</main>
+
+</div>
 
 <script>
-  const tg = window.Telegram?.WebApp;
-  tg?.ready(); tg?.expand();
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.MainButton.hide();
+}
 
-  // === YOUR WEBHOOK ===
-  const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235";
+const WEBHOOK_URL = 'https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235';
 
-  // ==== STATE ====
-  const state = {
-    trip: {
-      start_location: '', start_date: '', start_mileage: null,
-      finish_location: '', finish_date: '', finish_mileage: null,
-    },
-    loads: [],
-    expenses: [],
-    client_token: ''
-  };
+// ---------- STATE ----------
+const state = {
+  step:'trip',
+  trip:{
+    start_location:'', start_date:'', start_mileage:'',
+    finish_location:'', finish_date:'', finish_mileage:''
+  },
+  loads:[],
+  expenses:[],
+  currentLoadIndex:0,
+  client_token:''
+};
 
-  // token для дедупликации
-  (function buildClientToken(){
-    const u = tg?.initDataUnsafe?.user?.id || 'anon';
-    const auth = (new URLSearchParams(tg?.initData || '')).get('auth_date') || Date.now();
-    state.client_token = `${u}_${auth}`;
-  })();
+function showStep(id){
+  ['trip','loads','expenses','review'].forEach(s=>{
+    document.getElementById('step_'+s).hidden = (s!==id);
+  });
+  state.step = id;
+  if (id==='loads') renderLoads();
+  if (id==='expenses') renderExpenses();
+  if (id==='review') renderReview();
+}
 
-  // ==== NAV ====
-  function backToMenu(){ location.href = "./"; }
-  function showStep(id){
-    for (const el of document.querySelectorAll('.step')) el.hidden = true;
-    document.getElementById(`step-${id}`).hidden = false;
-    if (id==='loads') ensureLoadsInit();
-    if (id==='expenses') renderExpenses();
-    if (id==='review') renderReview();
+function backToMenu(){ if (tg) tg.close(); }
+
+// ---------- Trip ----------
+function saveTripFromInputs(){
+  state.trip.start_location = document.getElementById('start_location').value.trim();
+  state.trip.start_date     = document.getElementById('start_date').value;
+  state.trip.start_mileage  = document.getElementById('start_mileage').value;
+
+  state.trip.finish_location= document.getElementById('finish_location').value.trim();
+  state.trip.finish_date    = document.getElementById('finish_date').value;
+  state.trip.finish_mileage = document.getElementById('finish_mileage').value;
+}
+
+function validateTrip(){
+  saveTripFromInputs();
+  const e = document.getElementById('trip_err');
+  const s = state.trip;
+  if (s.start_mileage === '' || s.finish_mileage === '') {
+    e.textContent = 'Start mileage and Finish mileage are required.';
+    e.hidden = false;
+    return false;
   }
-  function goStep(id){
-    if (id==='loads' && !validateTrip()) return;
-    showStep(id);
+  e.hidden = true;
+  return true;
+}
+
+// ---------- Loads UI ----------
+function addLoad(){
+  saveCurrentLoad();
+  state.loads.push({ date:'', pickup:'', delivery:'', partial:'', tarp:'' });
+  state.currentLoadIndex = state.loads.length-1;
+  renderLoads();
+}
+function removeCurrentLoad(){
+  saveCurrentLoad();
+  if (state.loads.length<=1){ // всегда держим хотя бы 1 карточку
+    state.loads[0] = { date:'', pickup:'', delivery:'', partial:'', tarp:'' };
+    state.currentLoadIndex = 0;
+  } else {
+    state.loads.splice(state.currentLoadIndex,1);
+    state.currentLoadIndex = Math.max(0, state.currentLoadIndex-1);
   }
-
-  // ==== TRIP ====
-  function validateTrip(){
-    const tripErr = document.getElementById('trip_err');
-    const get = id => document.getElementById(id).value.trim();
-    const start_m = Number(document.getElementById('start_mileage').value);
-    const finish_m = Number(document.getElementById('finish_mileage').value);
-
-    if (Number.isNaN(start_m) || Number.isNaN(finish_m) ||
-        document.getElementById('start_mileage').value==='' ||
-        document.getElementById('finish_mileage').value==='') {
-      tripErr.textContent = 'Start mileage and Finish mileage are required.';
-      tripErr.hidden = false; return false;
-    }
-    tripErr.hidden = true;
-
-    state.trip = {
-      start_location: get('start_location'),
-      start_date: document.getElementById('start_date').value || '',
-      start_mileage: start_m,
-      finish_location: get('finish_location'),
-      finish_date: document.getElementById('finish_date').value || '',
-      finish_mileage: finish_m,
-    };
-    return true;
+  renderLoads();
+}
+function saveCurrentLoad(){
+  const i = state.currentLoadIndex;
+  const wrap = document.getElementById('loadCard');
+  if (!wrap || state.loads.length===0) return;
+  const L = state.loads[i] || (state.loads[i]={});
+  L.date     = wrap.querySelector('[name="date"]')?.value || '';
+  L.pickup   = wrap.querySelector('[name="pickup"]')?.value.trim() || '';
+  L.delivery = wrap.querySelector('[name="delivery"]')?.value.trim() || '';
+  L.partial  = wrap.querySelector('[name="partial"]')?.value || '';
+  L.tarp     = wrap.querySelector('[name="tarp"]')?.value || '';
+}
+function isLoadFilled(L){
+  const hasText = (s) => s && String(s).trim().length>0;
+  const hasNum  = (v) => v!==null && v!=='' && !Number.isNaN(Number(v));
+  return hasText(L.pickup) || hasText(L.delivery) || hasText(L.date) || hasNum(L.partial) || hasNum(L.tarp);
+}
+function validateLoads(){
+  saveCurrentLoad();
+  const err = document.getElementById('loads_err');
+  if (state.loads.length===0){
+    err.textContent = 'Add at least 1 load.';
+    err.hidden = false; return false;
   }
-
-  // ==== LOADS (cards + chips) ====
-  let currentLoad = 0;
-  function blankLoad(){ return { date:'', pickup:'', delivery:'', partial:null, tarp:null }; }
-
-  function ensureLoadsInit(){
-    if (!Array.isArray(state.loads)) state.loads = [];
-    if (state.loads.length === 0) state.loads.push(blankLoad()); // гарантируем минимум 1
-    currentLoad = Math.min(currentLoad, state.loads.length-1);
-    renderLoads();
+  const ok = state.loads.some(isLoadFilled);
+  if (!ok){
+    err.textContent = 'Please fill at least one field in Load 1 (e.g., Pickup, Delivery or Date).';
+    err.hidden = false; return false;
   }
+  err.hidden = true; return true;
+}
+function renderLoads(){
+  // initial at least one
+  if (state.loads.length===0){ state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}]; }
+  const chips = document.getElementById('loadChips');
+  chips.innerHTML = '';
+  state.loads.forEach((_,idx)=>{
+    const b = document.createElement('button');
+    b.type='button';
+    b.className='chip';
+    b.textContent=`Load ${idx+1}`;
+    if (idx===state.currentLoadIndex) b.style.background= 'var(--primary)';
+    b.onclick=()=>{ saveCurrentLoad(); state.currentLoadIndex=idx; renderLoads(); };
+    chips.appendChild(b);
+  });
 
-  function addLoad(){
-    saveCurrentLoad();
-    state.loads.push(blankLoad());
-    currentLoad = state.loads.length-1;
-    renderLoads();
-  }
-  function removeCurrentLoad(){
-    if (state.loads.length <= 1) { // минимум 1 load
-      alert('At least 1 load is required.');
-      return;
-    }
-    state.loads.splice(currentLoad,1);
-    currentLoad = Math.max(0, currentLoad-1);
-    renderLoads();
-  }
-  function goToLoad(i){ saveCurrentLoad(); currentLoad = i; renderLoads(); }
-
-  function saveCurrentLoad(){
-    const f = document.getElementById('loadForm');
-    if (!f) return;
-    const L = state.loads[currentLoad] || blankLoad();
-    L.date = f.date.value || '';
-    L.pickup = f.pickup.value.trim();
-    L.delivery = f.delivery.value.trim();
-    L.partial = f.partial.value === '' ? null : Number(f.partial.value);
-    L.tarp = f.tarp.value === '' ? null : Number(f.tarp.value);
-    state.loads[currentLoad] = L;
-  }
-
-  function renderLoads(){
-    // chips
-    const chips = state.loads.map((_,i)=>(
-      `<div class="chip ${i===currentLoad?'active':''}" onclick="goToLoad(${i})">Load ${i+1}</div>`
-    )).join('');
-    document.getElementById('loadChips').innerHTML = chips;
-
-    // card
-    const L = state.loads[currentLoad];
-    document.getElementById('loadCard').innerHTML = `
-      <form id="loadForm" class="grid2">
-        <div class="field" style="grid-column: 1 / -1;">
-          <label>Date</label>
-          <input name="date" type="date" value="${esc(L.date)}">
-        </div>
-        <div class="field">
-          <label>Pickup location</label>
-          <input name="pickup" placeholder="City, ST" value="${esc(L.pickup)}">
-        </div>
-        <div class="field">
-          <label>Delivery location</label>
-          <input name="delivery" placeholder="City, ST" value="${esc(L.delivery)}">
-        </div>
-        <div class="field">
+  const i = state.currentLoadIndex;
+  const L = state.loads[i];
+  const card = document.getElementById('loadCard');
+  card.innerHTML = `
+    <div class="grid">
+      <div>
+        <label>Date</label>
+        <input type="date" name="date" value="${L.date||''}">
+      </div>
+      <div>
+        <label>Pickup location</label>
+        <input name="pickup" placeholder="City, ST" value="${escapeHtml(L.pickup||'')}">
+      </div>
+      <div>
+        <label>Delivery location</label>
+        <input name="delivery" placeholder="City, ST" value="${escapeHtml(L.delivery||'')}">
+      </div>
+      <div class="grid grid-2">
+        <div>
           <label>Partial (qty)</label>
-          <input name="partial" type="number" inputmode="numeric" min="0" value="${L.partial??''}">
+          <input type="number" min="0" step="1" name="partial" value="${L.partial||''}">
         </div>
-        <div class="field">
+        <div>
           <label>Tarp (qty)</label>
-          <input name="tarp" type="number" inputmode="numeric" min="0" value="${L.tarp??''}">
-        </div>
-      </form>
-    `;
-  }
-
-  // ==== EXPENSES ====
-  function blankExp(){ return { name:'', price:null }; }
-  function addExpense(){ state.expenses.push(blankExp()); renderExpenses(); }
-  function removeExpense(){ state.expenses.pop(); if(state.expenses.length===0) state.expenses=[]; renderExpenses(); }
-
-  function renderExpenses(){
-    const wrap = document.getElementById('expWrap');
-    if (!Array.isArray(state.expenses) || state.expenses.length===0) state.expenses = [blankExp()];
-    wrap.innerHTML = state.expenses.map((e,idx)=>`
-      <div class="card" style="margin:10px 0">
-        <div class="grid2">
-          <div class="field">
-            <label>Name</label>
-            <input data-idx="${idx}" data-key="name" value="${esc(e.name)}" placeholder="Name">
-          </div>
-          <div class="field">
-            <label>Price</label>
-            <input data-idx="${idx}" data-key="price" type="number" inputmode="decimal" min="0" step="0.01" value="${e.price??''}">
-          </div>
+          <input type="number" min="0" step="1" name="tarp" value="${L.tarp||''}">
         </div>
       </div>
-    `).join('');
-    // bind
-    wrap.querySelectorAll('input').forEach(inp=>{
-      inp.addEventListener('input', e=>{
-        const i = Number(e.target.dataset.idx);
-        const k = e.target.dataset.key;
-        const v = (k==='price') ? (e.target.value===''?null:Number(e.target.value)) : e.target.value;
-        state.expenses[i][k]=v;
-      });
+    </div>
+  `;
+}
+
+// ---------- Expenses UI ----------
+function addExpense(){
+  state.expenses.push({ name:'', price:'' });
+  renderExpenses();
+}
+function removeExpense(i){
+  state.expenses.splice(i,1);
+  renderExpenses();
+}
+function renderExpenses(){
+  const box = document.getElementById('expenseList');
+  if (state.expenses.length===0) state.expenses=[{name:'',price:''}];
+  box.innerHTML='';
+  state.expenses.forEach((ex,idx)=>{
+    const row = document.createElement('div');
+    row.className='card';
+    row.innerHTML = `
+      <div class="grid grid-2">
+        <div>
+          <label>Name</label>
+          <input value="${escapeHtml(ex.name||'')}" oninput="state.expenses[${idx}].name=this.value">
+        </div>
+        <div>
+          <label>Price</label>
+          <input type="number" min="0" step="0.01" value="${ex.price||''}" oninput="state.expenses[${idx}].price=this.value">
+        </div>
+      </div>
+      <div class="row gap">
+        <button class="btn ghost" type="button" onclick="removeExpense(${idx})">Remove</button>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+}
+
+// ---------- Navigation with validation ----------
+function goStep(id){
+  if (id==='loads'     && !validateTrip())   return;
+  if ((id==='expenses' || id==='review') && !validateLoads()) return;
+  showStep(id);
+}
+
+// ---------- Review ----------
+function renderReview(){
+  saveTripFromInputs();
+  saveCurrentLoad();
+  const payload = buildPayload(true);
+  document.getElementById('reviewBox').textContent = JSON.stringify(payload, null, 2);
+}
+
+// ---------- Payload ----------
+function buildPayload(forPreview=false){
+  const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : null;
+  const meta = tg ? { initData: tg.initData || '', user } : {};
+  const client_token = `${user?.id||'anon'}_${Date.now()}`;
+
+  // фильтруем пустые лоуды в превью/отправке, но валидатор уже не пустит
+  const loads = state.loads.filter(isLoadFilled);
+  const expenses = state.expenses.filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))) );
+
+  const out = {
+    _tg_meta: meta,
+    trip: { ...state.trip },
+    loads,
+    expenses,
+    client_token
+  };
+  if (!forPreview) state.client_token = client_token;
+  return out;
+}
+
+// ---------- Submit ----------
+let inFlight = false;
+
+function localKey(userId){ return `trip_submit_lock_${userId}`; }
+
+async function submitTrip(){
+  if (inFlight) return;
+  if (!validateTrip() || !validateLoads()) return;
+
+  const userId = tg?.initDataUnsafe?.user?.id || 'anon';
+  // простая защита от дублей на 2 минуты
+  const lk = localKey(userId);
+  const last = Number(localStorage.getItem(lk)||'0');
+  const now = Date.now();
+  if (now - last < 120000){
+    showSubmitError('You have recently submitted a trip. Please try again in a minute.');
+    return;
+  }
+
+  const payload = buildPayload(false);
+  clearSubmitError();
+  lockSubmit(true);
+
+  try{
+    const res = await fetch(WEBHOOK_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
     });
-  }
-
-  // ==== REVIEW ====
-  function renderReview(){
-    saveCurrentLoad();
-    const pruned = prunePayload(buildPayload());
-    document.getElementById('reviewBox').textContent = JSON.stringify(pruned, null, 2);
-  }
-
-  // ==== SUBMIT ====
-  let inFlight = false;
-  async function submitTrip(){
-    if (inFlight) return;
-
-    // обязательный минимум 1 load
-    if (!state.loads || state.loads.length === 0) {
-      showErr('Add at least 1 load before submitting.');
-      return;
+    if (!res.ok){
+      const t = await res.text();
+      throw new Error(`HTTP ${res.status}: ${t}`);
     }
-
-    inFlight = true;
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-
-    const payload = buildPayload();
-    try{
-      const res = await fetch(WEBHOOK_URL, {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify(payload),
-      });
-      if(!res.ok) throw new Error('Server error');
-      showOk('Thanks! Your trip was submitted.');
-    }catch(err){
-      showErr('Submit failed. Try again.');
-      btn.disabled = false;
-      inFlight = false;
-      return;
-    }
+    localStorage.setItem(lk, String(now));
+    if (tg){ tg.showPopup({message:'Submitted! Thank you.'}); tg.close(); }
+    else alert('Submitted!');
+  }catch(err){
+    showSubmitError(err.message||'Submit error');
+  }finally{
+    lockSubmit(false);
   }
+}
 
-  function showOk(msg){ const n=document.getElementById('result'); n.className='ok'; n.textContent=msg; }
-  function showErr(msg){ const n=document.getElementById('result'); n.className='err'; n.textContent=msg; }
+function lockSubmit(on){
+  inFlight = on;
+  const b = document.getElementById('submitBtn');
+  b.disabled = on;
+  b.textContent = on ? 'Submitting…' : 'Submit';
+}
+function showSubmitError(msg){
+  const e = document.getElementById('submit_err');
+  e.textContent = msg; e.hidden = false;
+}
+function clearSubmitError(){ document.getElementById('submit_err').hidden = true; }
 
-  // ==== HELPERS ====
-  function buildPayload(){
-    const loads = (state.loads||[]).map(l=>({...l}));
-    const expenses = (state.expenses||[]).map(e=>({...e}));
-    return {
-      _tg_meta: {
-        initData: tg?.initData || "",
-        user: tg?.initDataUnsafe?.user || null
-      },
-      trip: {...state.trip},
-      loads,
-      expenses,
-      client_token: state.client_token
-    };
-  }
+// ---------- Utils ----------
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
-  function prunePayload(obj){
-    function isEmpty(val){
-      return val===null || val===undefined || (typeof val==='string' && val.trim()==='');
-    }
-    if (Array.isArray(obj)){
-      return obj.map(prunePayload).filter(x=>{
-        if (x && typeof x==='object' && !Array.isArray(x)) {
-          return Object.keys(x).length>0;
-        }
-        return !(x===null || x===undefined || x==='');
-      });
-    }
-    if (obj && typeof obj==='object'){
-      const out={};
-      for (const [k,v] of Object.entries(obj)){
-        const pv = prunePayload(v);
-        if (Array.isArray(pv) && pv.length===0) continue;
-        if (typeof pv==='object' && !Array.isArray(pv) && Object.keys(pv).length===0) continue;
-        if (!isEmpty(pv)) out[k]=pv;
-      }
-      return out;
-    }
-    return obj;
-  }
-
-  function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
-
-  // init
-  showStep('trip');
+// Init defaults
+(function init(){
+  // at least one empty load exists
+  if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
+  renderLoads();
+})();
 </script>
 </body>
 </html>
