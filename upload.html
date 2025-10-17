@@ -105,7 +105,6 @@
     tg?.ready(); tg?.expand();
 
     const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/upload-bol";
-    const COOLDOWN_MS = 30_000; // 30s cooldown after an error
 
     const form = document.getElementById('bolForm');
     const submitBtn = document.getElementById('submit');
@@ -116,21 +115,15 @@
     backBtn?.addEventListener('click', () => { location.href = "./"; });
 
     let inFlight = false;
-    let cooldownUntil = 0;
-    let cooldownTimer = null;
 
     function lockForm(on) {
+      // ВАЖНО: файл НЕ дизейблим, иначе он не попадёт в FormData
       form.style.pointerEvents = on ? 'none' : 'auto';
       form.style.opacity = on ? '0.85' : '1';
       submitBtn.disabled = on;
-      fileInput.disabled = on;
       backBtn.disabled = on;
+      submitBtn.textContent = on ? 'Uploading…' : 'Submit';
     }
-
-    function setSubmitText(text) {
-      submitBtn.textContent = text;
-    }
-
     function showError(msg) {
       alertBox.textContent = msg;
       alertBox.style.display = 'block';
@@ -140,59 +133,35 @@
       alertBox.textContent = '';
     }
 
-    function startCooldown(ms) {
-      cooldownUntil = Date.now() + ms;
-      lockForm(true);
-      tickCooldown();
-      if (cooldownTimer) clearInterval(cooldownTimer);
-      cooldownTimer = setInterval(tickCooldown, 250);
-    }
-
-    function tickCooldown() {
-      const left = Math.max(0, cooldownUntil - Date.now());
-      if (left <= 0) {
-        clearInterval(cooldownTimer); cooldownTimer = null;
-        cooldownUntil = 0;
-        hideError();
-        setSubmitText('Submit');
-        lockForm(false);
-        return;
-      }
-      const s = Math.ceil(left / 1000);
-      setSubmitText(`Wait ${s}s`);
-      showError('Error. Please try again in 30 seconds.');
-    }
-
-    // блокируем повторные клики по кнопке, пока отправка идёт
     submitBtn.addEventListener('click', (e) => {
-      if (inFlight || cooldownUntil > Date.now()) { e.preventDefault(); e.stopPropagation(); }
+      if (inFlight) { e.preventDefault(); e.stopPropagation(); }
     }, { capture: true });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (inFlight || cooldownUntil > Date.now()) return;
+      if (inFlight) return;
 
       hideError();
       inFlight = true;
-      lockForm(true);
-      setSubmitText('Uploading…');
 
+      // 1) СНАЧАЛА собираем FormData (пока инпут не disabled)
       const meta = {
         initData: tg?.initData || "",
         user: tg?.initDataUnsafe?.user || null
       };
-
       const fd = new FormData(form);
       fd.append("_tg_meta", JSON.stringify(meta));
+
+      // 2) Теперь можно блокировать UI
+      lockForm(true);
 
       try {
         const res = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
         if (!res.ok) throw new Error('Upload failed');
 
-        // успех: показываем Thanks и удаляем форму
+        // успех: убираем форму, показываем thanks
         const container = form.parentElement;
         form.remove();
-
         const done = document.createElement('div');
         done.innerHTML = `
           <div style="margin-top:8px;font-size:15px;font-weight:700;">Thanks!</div>
@@ -201,13 +170,10 @@
         `;
         container.appendChild(done);
         document.getElementById('back2')?.addEventListener('click', () => location.href = "./");
-
-        // tg?.close?.(); // можно закрыть мини-апп сразу
       } catch (err) {
-        // ошибка: запускаем локальный кулдаун на 30 секунд
-        startCooldown(COOLDOWN_MS);
-      } finally {
+        showError('Error. Please try again.');
         inFlight = false;
+        lockForm(false);
       }
     }, { passive: false });
   </script>
