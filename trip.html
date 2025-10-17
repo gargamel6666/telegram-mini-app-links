@@ -31,17 +31,14 @@
   .err{color:var(--err);margin:6px 2px 0 2px;font-size:14px}
   [hidden]{display:none !important}
 
-  /* review pretty view */
+  /* review pretty view (only Trip / Loads / Expenses) */
   .review-block{margin-top:12px}
   .rv-title{font-weight:700;margin:6px 0 8px}
   .kv{border:1px solid rgba(255,255,255,.08);background:#0f1422;border-radius:14px;overflow:hidden}
   .kv-row{display:flex;gap:12px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.06)}
   .kv-row:first-child{border-top:none}
-  .kv-k{min-width:140px;color:var(--muted)}
+  .kv-k{min-width:160px;color:var(--muted)}
   .rv-load{margin-top:10px}
-  details.mono{margin-top:12px}
-  details summary{cursor:pointer;color:var(--muted)}
-  .mono pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0b0f18;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;color:#cfe2ff}
 </style>
 </head>
 <body>
@@ -133,11 +130,6 @@
   <section id="step_review" class="section" hidden>
     <div class="title">Review & submit</div>
     <div id="reviewBox" class="review-block"></div>
-
-    <details class="mono">
-      <summary>Show raw JSON</summary>
-      <pre id="rawJson"></pre>
-    </details>
 
     <div id="submit_err" class="err" hidden></div>
 
@@ -278,62 +270,59 @@ function goStep(id){
   showStep(id);
 }
 
-// Review
+// Review (Trip report / Loads / Expenses only)
 function renderReview(){
   saveTripFromInputs(); saveCurrentLoad();
   const payload = buildPayload(true);
-  // pretty view:
-  const rv = [];
-  const u = payload._tg_meta?.user;
-  if (u){
-    rv.push(`<div class="rv-title">User</div>
-      <div class="kv">
-        <div class="kv-row"><div class="kv-k">Telegram</div><div>@${esc(u.username||'')}</div></div>
-        <div class="kv-row"><div class="kv-k">User ID</div><div>${u.id||''}</div></div>
-      </div>`);
-  }
 
-  // Trip
+  const rv = [];
+
+  // Trip report
   const t = payload.trip||{};
   const tripRows = [];
-  if (t.start_location) tripRows.push(row('Start location', t.start_location));
-  if (t.start_date)     tripRows.push(row('Start date', t.start_date));
-  tripRows.push(row('Start mileage', t.start_mileage));
-  if (t.finish_location)tripRows.push(row('Finish location', t.finish_location));
-  if (t.finish_date)    tripRows.push(row('Finish date', t.finish_date));
-  tripRows.push(row('Finish mileage', t.finish_mileage));
-  rv.push(`<div class="rv-title">Trip</div><div class="kv">${tripRows.join('')}</div>`);
+  tripRows.push(row('Start location', t.start_location||''));
+  tripRows.push(row('Start date', t.start_date||''));
+  tripRows.push(row('Start mileage', t.start_mileage||''));
+  tripRows.push(row('Finish location', t.finish_location||''));
+  tripRows.push(row('Finish date', t.finish_date||''));
+  tripRows.push(row('Finish mileage', t.finish_mileage||''));
+  rv.push(`<div class="rv-title">Trip report</div><div class="kv">${tripRows.join('')}</div>`);
 
   // Loads
   const loads = payload.loads||[];
+  rv.push(`<div class="rv-title" style="margin-top:10px">Loads${loads.length?` (${loads.length})`:''}</div>`);
   if (loads.length){
-    rv.push(`<div class="rv-title">Loads (${loads.length})</div>`);
     loads.forEach((L, idx)=>{
       const Lrows=[];
       if (L.date)     Lrows.push(row('Date', L.date));
-      if (L.pickup)   Lrows.push(row('Pickup', L.pickup));
-      if (L.delivery) Lrows.push(row('Delivery', L.delivery));
+      if (L.pickup)   Lrows.push(row('Pickup location', L.pickup));
+      if (L.delivery) Lrows.push(row('Delivery location', L.delivery));
       if (L.partial!=='' && L.partial!=null) Lrows.push(row('Partial (qty)', L.partial));
       if (L.tarp!=='' && L.tarp!=null)       Lrows.push(row('Tarp (qty)', L.tarp));
       rv.push(`<div class="kv rv-load"><div class="kv-row"><div class="kv-k">Load</div><div>#${idx+1}</div></div>${Lrows.join('')}</div>`);
     });
+  } else {
+    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No loads</div></div></div>`);
   }
 
   // Expenses
   const exps = (payload.expenses||[]).filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))));
+  rv.push(`<div class="rv-title" style="margin-top:10px">Expenses${exps.length?` (${exps.length})`:''}</div>`);
   if (exps.length){
-    rv.push(`<div class="rv-title">Expenses (${exps.length})</div>`);
-    exps.forEach((e,idx)=> rv.push(`<div class="kv rv-load">
-      <div class="kv-row"><div class="kv-k">Item</div><div>#${idx+1}</div></div>
-      ${e.name?row('Name',e.name):''}
-      ${e.price!==''?row('Price',e.price):''}
-    </div>`));
+    exps.forEach((e,idx)=> rv.push(
+      `<div class="kv rv-load">
+         <div class="kv-row"><div class="kv-k">Item</div><div>#${idx+1}</div></div>
+         ${e.name?row('Name',e.name):''}
+         ${e.price!==''?row('Price',e.price):''}
+       </div>`
+    ));
+  } else {
+    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No expenses</div></div></div>`);
   }
 
   document.getElementById('reviewBox').innerHTML = rv.join('');
-  document.getElementById('rawJson').textContent = JSON.stringify(payload,null,2);
 
-  function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div>${esc(String(v))}</div></div>`; }
+  function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div>${esc(String(v||''))}</div></div>`; }
 }
 
 // Payload
