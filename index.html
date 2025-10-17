@@ -52,9 +52,7 @@
     h1 { font-size: 18px; line-height: 1.25; margin: 0; }
     .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
-    .grid {
-      display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px;
-    }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
 
     .tile {
       border: 1px solid var(--stroke);
@@ -104,7 +102,7 @@
     </div>
 
     <section class="grid">
-      <!-- BUTTON 1: Upload BOL -->
+      <!-- BUTTON 1: Upload BOL (internal page, stay inside WebApp) -->
       <div class="tile" data-href="./upload.html">
         <div class="icn">📤</div>
         <div>
@@ -113,7 +111,7 @@
         </div>
       </div>
 
-      <!-- BUTTON 2: Trip Form -->
+      <!-- BUTTON 2: Trip Form (external, open via Telegram browser) -->
       <div class="tile" data-href="https://forms.fillout.com/t/wvxFmoAtpMus">
         <div class="icn">🚚</div>
         <div>
@@ -133,14 +131,25 @@
 
     document.querySelectorAll('.tile[data-href]').forEach(el => {
       el.addEventListener('click', () => {
-        const url = el.getAttribute('data-href');
-        tg?.openLink(url, { try_instant_view: false });
+        const raw = el.getAttribute('data-href') || '';
+        const url = new URL(raw, location.href); // корректно обработает относительные пути на GitHub Pages
+
+        // Внутренние ссылки (тот же origin) открываем внутри WebApp — сохраняется initData и user.id
+        if (url.origin === location.origin) {
+          location.href = url.href;
+        } else {
+          // Внешние сайты — через встроенный браузер Telegram
+          tg?.openLink(url.href, { try_instant_view: false });
+        }
       });
     });
+
     document.getElementById('close')?.addEventListener('click', () => tg?.close());
   </script>
 </body>
 </html>
+
+
 
 
 
