@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Trip report</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -19,443 +16,429 @@
       --stroke: rgba(255,255,255,0.12);
       --shadow: 0 10px 30px rgba(0,0,0,0.25);
       --radius: 18px;
-      --danger: #ff6b6b;
-      --good: #10b981;
     }
-    *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body{ height:100%; }
-    body{
-      margin:0;
-      color:var(--text);
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
       background:
         radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
         radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
         var(--bg);
-      display:grid; place-items:start center;
-      padding:clamp(12px, 2.8vw, 18px);
-      padding-top: calc(12px + env(safe-area-inset-top));
-      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display: grid;
+      place-items: start center;
+      padding: 16px env(safe-area-inset-right) calc(16px + env(safe-area-inset-bottom)) env(safe-area-inset-left);
     }
-    .card{
-      width:100%;
-      max-width: 720px;
-      background:var(--card);
+    main {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 18px;
+    }
+    h1 { margin: 6px 0 10px; font-size: 22px; }
+    h2 { margin: 0 0 10px; font-size: 20px; }
+    h3 { margin: 10px 0 6px; font-size: 16px; }
+    .muted { color: var(--muted); }
+    .step[hidden] { display: none; }
+
+    .field { display: grid; gap: 6px; margin: 10px 0; }
+    label { font-size: 13px; color: var(--muted); }
+    input, .input {
+      width: 100%; padding: 12px 12px;
+      border-radius: 12px; border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05); color: var(--text);
+      font-size: 15px;
+    }
+    input[type="number"] { -moz-appearance:textfield; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .row { display: flex; gap: 10px; margin-top: 12px; }
+    .row.gap { justify-content: space-between; flex-wrap: wrap; }
+
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 12px 16px; border-radius: 14px; border: 1px solid var(--stroke);
+      background: var(--accent); color: var(--accentText); font-weight: 700; cursor: pointer;
+    }
+    .btn.ghost { background: transparent; color: var(--text); }
+    .btn[disabled]{ opacity:.6; cursor: default; }
+
+    /* chips & card for loads */
+    .chips{display:flex; gap:8px; overflow:auto; padding:4px 0 8px;}
+    .chip{
+      padding:6px 10px; border:1px solid var(--stroke); border-radius:12px;
+      background:rgba(255,255,255,.06); font-size:13px; cursor:pointer; white-space:nowrap;
+    }
+    .chip.active{background:var(--accent); color:var(--accentText); border-color:transparent}
+    .card{border:1px solid var(--stroke); border-radius:14px; padding:12px; background:rgba(255,255,255,.05)}
+    .grid2{display:grid; grid-template-columns:1fr; gap:12px}
+    @media (min-width:900px){ .grid2{ grid-template-columns:1fr 1fr; } }
+
+    pre {
+      background: rgba(0,0,0,.35); padding: 12px; border-radius: 12px; overflow:auto;
       border:1px solid var(--stroke);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      padding:18px;
     }
-    h1{ font-size:20px; margin:0 0 6px; }
-    .sub{ color:var(--muted); font-size:13px; margin-bottom:14px; }
-
-    .grid-2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-    }
-    .field{ display:flex; flex-direction:column; gap:6px; }
-    .label{ font-weight:600; font-size:13px; }
-    input, select, button{
-      width:100%;
+    .ok, .err {
+      margin-top: 12px; padding: 12px; border-radius: 12px; font-size: 14px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.05);
-      color:var(--text);
-      border-radius: 14px;
-      padding: 12px 12px;
-      min-height: 44px;
-      outline: none;
     }
-    input[type="number"]{ -moz-appearance: textfield; }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button{ -webkit-appearance: none; margin:0; }
-
-    .btn{
-      border:1px solid var(--stroke);
-      background:var(--accent);
-      color:var(--accentText);
-      font-weight:700; border-radius:14px; padding:14px 16px;
-      cursor:pointer; transition:transform .12s ease;
-    }
-    .btn.secondary{ background:transparent; color:var(--text); }
-    .btn:active{ transform:translateY(1px); }
-    .row{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .row .btn{ flex:1 1 48%; }
-    .danger{ color:var(--danger); }
-    .ok{ color:var(--good); }
-    .alert{
-      display:none; margin:10px 0 0; padding:10px 12px; border-radius:12px;
-      border:1px solid rgba(255,255,255,0.15); background: rgba(255,107,107,0.12);
-      color:#ffd7d7; font-size:13px;
-    }
-
-    /* Loads/Expenses table (mobile-friendly: horizontal scroll) */
-    .table{
-      margin-top:8px; border:1px solid var(--stroke); border-radius:14px; overflow:hidden;
-      background: rgba(255,255,255,0.03);
-    }
-    .thead, .trow{
-      display:grid; gap:8px; padding:10px;
-      grid-template-columns: 120px 1fr 1fr 70px 70px 86px; /* date, pickup, delivery, partial, tarp, remove */
-      min-width: 660px; /* enable horizontal scroll on small screens */
-    }
-    .thead{ font-weight:700; font-size:13px; color:var(--muted); background:rgba(255,255,255,0.04); }
-    .trow + .trow{ border-top:1px solid var(--stroke); }
-    .table-wrap{ overflow-x:auto; border-radius:14px; }
-
-    .switch{
-      display:flex; align-items:center; justify-content:center; gap:8px;
-      border:1px solid var(--stroke); border-radius:12px; padding:8px 10px; height:44px;
-    }
-    .switch input{ width:auto; min-height: auto; }
-    .ghost{ background:transparent; color:var(--text); border:1px dashed var(--stroke); }
-    .muted{ color:var(--muted); }
-
-    .review h3{ margin:14px 0 6px; font-size:16px; }
-    .list{ margin:6px 0 2px; padding-left:16px; }
-    .list li{ margin:6px 0; }
-
-    @media (max-width:640px){
-      .grid-2{ grid-template-columns: 1fr; }
-      .row .btn{ flex:1 1 100%; }
-    }
+    .ok { background: rgba(34,197,94,.12); color:#b7ffcf; }
+    .err{ background: rgba(244,63,94,.12); color:#ffd7d7; }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>Trip report</h1>
-    <div class="sub">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</div>
+<main>
+  <h1>Trip report</h1>
+  <p class="muted">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</p>
 
-    <!-- STEP 1: Trip -->
-    <section id="step1">
-      <div class="label muted" style="margin:8px 0 6px;">Trip start</div>
-      <div class="grid-2">
-        <div class="field">
-          <div class="label">Start location</div>
-          <input id="start_location" placeholder="City, ST">
-        </div>
-        <div class="field">
-          <div class="label">Date</div>
-          <input id="start_date" type="date" inputmode="none">
-        </div>
-        <div class="field">
-          <div class="label">Start mileage <span class="danger">*</span></div>
-          <input id="start_mileage" type="number" inputmode="numeric" placeholder="0" required>
-        </div>
+  <!-- STEP 1: Trip -->
+  <section id="step-trip" class="step">
+    <h3>Trip start</h3>
+    <div class="grid2">
+      <div class="field">
+        <label>Start location</label>
+        <input id="start_location" placeholder="City, ST">
       </div>
-
-      <div class="label muted" style="margin:16px 0 6px;">Trip finish</div>
-      <div class="grid-2">
-        <div class="field">
-          <div class="label">Finish location</div>
-          <input id="finish_location" placeholder="City, ST">
-        </div>
-        <div class="field">
-          <div class="label">Date</div>
-          <input id="finish_date" type="date" inputmode="none">
-        </div>
-        <div class="field">
-          <div class="label">Finish mileage <span class="danger">*</span></div>
-          <input id="finish_mileage" type="number" inputmode="numeric" placeholder="0" required>
-        </div>
+      <div class="field">
+        <label>Date</label>
+        <input id="start_date" type="date">
       </div>
-
-      <div class="alert" id="a1"></div>
-      <div class="row">
-        <button class="btn" id="next1">Next → Loads</button>
-        <button class="btn secondary" id="toMenu1" type="button">Back to menu</button>
+      <div class="field">
+        <label>Start mileage *</label>
+        <input id="start_mileage" type="number" inputmode="numeric" min="0" required>
       </div>
-    </section>
+    </div>
 
-    <!-- STEP 2: Loads -->
-    <section id="step2" hidden>
-      <div class="label">Loads</div>
-      <div class="sub">Add rows as needed.</div>
+    <h3>Trip finish</h3>
+    <div class="grid2">
+      <div class="field">
+        <label>Finish location</label>
+        <input id="finish_location" placeholder="City, ST">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input id="finish_date" type="date">
+      </div>
+      <div class="field">
+        <label>Finish mileage *</label>
+        <input id="finish_mileage" type="number" inputmode="numeric" min="0" required>
+      </div>
+    </div>
 
-      <div class="table-wrap">
-        <div class="table" id="loadsTable">
-          <div class="thead">
-            <div>Date</div><div>Pickup location</div><div>Delivery location</div>
-            <div>Partial</div><div>Tarp</div><div></div>
+    <div id="trip_err" class="err" hidden></div>
+
+    <div class="row">
+      <button class="btn primary" type="button" onclick="goStep('loads')">Next → Loads</button>
+      <button class="btn ghost" type="button" onclick="backToMenu()">Back to menu</button>
+    </div>
+  </section>
+
+  <!-- STEP 2: Loads (cards + chips) -->
+  <section id="step-loads" class="step" hidden>
+    <h3>Loads</h3>
+    <p class="muted">Add rows as needed.</p>
+
+    <div id="loadChips" class="chips"></div>
+    <div id="loadCard" class="card"></div>
+
+    <div class="row gap">
+      <button class="btn ghost" type="button" onclick="removeCurrentLoad()">Remove load</button>
+      <button class="btn" type="button" onclick="addLoad()">+ Add load</button>
+    </div>
+
+    <div class="row">
+      <button class="btn primary" type="button" onclick="goStep('expenses')">Next → Expenses</button>
+      <button class="btn ghost" type="button" onclick="goStep('trip')">← Back</button>
+    </div>
+  </section>
+
+  <!-- STEP 3: Expenses -->
+  <section id="step-expenses" class="step" hidden>
+    <h3>Expenses</h3>
+    <p class="muted">Add rows as needed.</p>
+
+    <div id="expWrap"></div>
+
+    <div class="row gap">
+      <button class="btn ghost" type="button" onclick="removeExpense()">Remove expense</button>
+      <button class="btn" type="button" onclick="addExpense()">+ Add expense</button>
+    </div>
+
+    <div class="row">
+      <button class="btn primary" type="button" onclick="goStep('review')">Next → Review</button>
+      <button class="btn ghost" type="button" onclick="goStep('loads')">← Back</button>
+    </div>
+  </section>
+
+  <!-- STEP 4: Review -->
+  <section id="step-review" class="step" hidden>
+    <h3>Review & submit</h3>
+    <pre id="reviewBox"></pre>
+
+    <div id="result" class=""></div>
+
+    <div class="row">
+      <button id="submitBtn" class="btn primary" type="button" onclick="submitTrip()">Submit</button>
+      <button class="btn ghost" type="button" onclick="goStep('expenses')">← Back</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready(); tg?.expand();
+
+  // ==== CONFIG ====
+  const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235"; // поменяй при необходимости
+
+  // ==== STATE ====
+  const state = {
+    trip: {
+      start_location: '', start_date: '', start_mileage: null,
+      finish_location: '', finish_date: '', finish_mileage: null,
+    },
+    loads: [],
+    expenses: [],
+    client_token: ''
+  };
+
+  // token для дедупликации на сервере
+  (function buildClientToken(){
+    const u = tg?.initDataUnsafe?.user?.id || 'anon';
+    const auth = (new URLSearchParams(tg?.initData || '')).get('auth_date') || Date.now();
+    state.client_token = `${u}_${auth}`;
+  })();
+
+  // ==== NAV ====
+  function backToMenu(){ location.href = "./"; }
+  function showStep(id){
+    for (const el of document.querySelectorAll('.step')) el.hidden = true;
+    document.getElementById(`step-${id}`).hidden = false;
+    if (id==='loads') ensureLoadsInit();
+    if (id==='expenses') renderExpenses();
+    if (id==='review') renderReview();
+  }
+  function goStep(id){
+    if (id==='loads' && !validateTrip()) return;
+    showStep(id);
+  }
+
+  // ==== TRIP ====
+  function validateTrip(){
+    const tripErr = document.getElementById('trip_err');
+    const get = id => document.getElementById(id).value.trim();
+    const start_m = Number(document.getElementById('start_mileage').value);
+    const finish_m = Number(document.getElementById('finish_mileage').value);
+
+    if (Number.isNaN(start_m) || Number.isNaN(finish_m) || document.getElementById('start_mileage').value==='' || document.getElementById('finish_mileage').value==='') {
+      tripErr.textContent = 'Start mileage and Finish mileage are required.';
+      tripErr.hidden = false; return false;
+    }
+    tripErr.hidden = true;
+
+    state.trip = {
+      start_location: get('start_location'),
+      start_date: document.getElementById('start_date').value || '',
+      start_mileage: start_m,
+      finish_location: get('finish_location'),
+      finish_date: document.getElementById('finish_date').value || '',
+      finish_mileage: finish_m,
+    };
+    return true;
+  }
+
+  // ==== LOADS (cards + chips) ====
+  let currentLoad = 0;
+  function blankLoad(){ return { date:'', pickup:'', delivery:'', partial:null, tarp:null }; }
+
+  function ensureLoadsInit(){
+    if (!Array.isArray(state.loads)) state.loads = [];
+    if (state.loads.length === 0) state.loads.push(blankLoad());
+    currentLoad = Math.min(currentLoad, state.loads.length-1);
+    renderLoads();
+  }
+
+  function addLoad(){
+    saveCurrentLoad();
+    state.loads.push(blankLoad());
+    currentLoad = state.loads.length-1;
+    renderLoads();
+  }
+  function removeCurrentLoad(){
+    if (state.loads.length === 0) return;
+    state.loads.splice(currentLoad,1);
+    currentLoad = Math.max(0, currentLoad-1);
+    if (state.loads.length === 0) state.loads.push(blankLoad());
+    renderLoads();
+  }
+  function goToLoad(i){ saveCurrentLoad(); currentLoad = i; renderLoads(); }
+
+  function saveCurrentLoad(){
+    const f = document.getElementById('loadForm');
+    if (!f) return;
+    const L = state.loads[currentLoad] || blankLoad();
+    L.date = f.date.value || '';
+    L.pickup = f.pickup.value.trim();
+    L.delivery = f.delivery.value.trim();
+    L.partial = f.partial.value === '' ? null : Number(f.partial.value);
+    L.tarp = f.tarp.value === '' ? null : Number(f.tarp.value);
+    state.loads[currentLoad] = L;
+  }
+
+  function renderLoads(){
+    // chips
+    const chips = state.loads.map((_,i)=>(
+      `<div class="chip ${i===currentLoad?'active':''}" onclick="goToLoad(${i})">Load ${i+1}</div>`
+    )).join('');
+    document.getElementById('loadChips').innerHTML = chips;
+
+    // card
+    const L = state.loads[currentLoad];
+    document.getElementById('loadCard').innerHTML = `
+      <form id="loadForm" class="grid2">
+        <div class="field">
+          <label>Date</label>
+          <input name="date" type="date" value="${esc(L.date)}">
+        </div>
+        <div class="field">
+          <label>Pickup location</label>
+          <input name="pickup" placeholder="City, ST" value="${esc(L.pickup)}">
+        </div>
+        <div class="field">
+          <label>Delivery location</label>
+          <input name="delivery" placeholder="City, ST" value="${esc(L.delivery)}">
+        </div>
+        <div class="field">
+          <label>Partial (qty)</label>
+          <input name="partial" type="number" inputmode="numeric" min="0" value="${L.partial??''}">
+        </div>
+        <div class="field">
+          <label>Tarp (qty)</label>
+          <input name="tarp" type="number" inputmode="numeric" min="0" value="${L.tarp??''}">
+        </div>
+      </form>
+    `;
+  }
+
+  // ==== EXPENSES ====
+  function blankExp(){ return { name:'', price:null }; }
+  function addExpense(){ state.expenses.push(blankExp()); renderExpenses(); }
+  function removeExpense(){ state.expenses.pop(); if(state.expenses.length===0) state.expenses=[]; renderExpenses(); }
+
+  function renderExpenses(){
+    const wrap = document.getElementById('expWrap');
+    if (!Array.isArray(state.expenses) || state.expenses.length===0) state.expenses = [blankExp()];
+    wrap.innerHTML = state.expenses.map((e,idx)=>`
+      <div class="card" style="margin:10px 0">
+        <div class="grid2">
+          <div class="field">
+            <label>Name</label>
+            <input data-idx="${idx}" data-key="name" value="${esc(e.name)}" placeholder="Name">
           </div>
-          <!-- rows here -->
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:12px;">
-        <button class="btn ghost" id="addLoad" type="button">+ Add load</button>
-      </div>
-
-      <div class="row">
-        <button class="btn" id="next2">Next → Expenses</button>
-        <button class="btn secondary" id="back2" type="button">← Back</button>
-      </div>
-    </section>
-
-    <!-- STEP 3: Expenses -->
-    <section id="step3" hidden>
-      <div class="label">Expenses</div>
-      <div class="sub">Add rows as needed.</div>
-
-      <div class="table-wrap">
-        <div class="table" id="expTable">
-          <div class="thead" style="grid-template-columns: 1fr 140px 86px; min-width: 420px;">
-            <div>Name</div><div>Price</div><div></div>
+          <div class="field">
+            <label>Price</label>
+            <input data-idx="${idx}" data-key="price" type="number" inputmode="decimal" min="0" step="0.01" value="${e.price??''}">
           </div>
         </div>
       </div>
-
-      <div class="row" style="margin-top:12px;">
-        <button class="btn ghost" id="addExp" type="button">+ Add expense</button>
-      </div>
-
-      <div class="row">
-        <button class="btn" id="next3">Next → Review</button>
-        <button class="btn secondary" id="back3" type="button">← Back</button>
-      </div>
-    </section>
-
-    <!-- STEP 4: Review -->
-    <section id="step4" hidden>
-      <div class="label">Review & submit</div>
-      <div id="review" class="review"></div>
-
-      <div class="alert" id="a4"></div>
-      <div class="row">
-        <button class="btn" id="submitBtn">Submit</button>
-        <button class="btn secondary" id="back4" type="button">← Back</button>
-      </div>
-    </section>
-
-    <!-- DONE -->
-    <section id="done" hidden>
-      <div class="ok" style="font-weight:700; margin-bottom:8px;">Thanks! Your report has been sent.</div>
-      <div class="sub">You can close this window or return to the menu.</div>
-      <div class="row">
-        <button class="btn secondary" id="toMenuDone" type="button">Back to menu</button>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    const tg = window.Telegram?.WebApp;
-    tg?.ready(); tg?.expand();
-
-    const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235"; // <-- при необходимости поменяй
-
-    // --- state ---
-    const state = {
-      trip: {
-        start_location: "", start_date: "", start_mileage: "",
-        finish_location: "", finish_date: "", finish_mileage: ""
-      },
-      loads: [],
-      expenses: [],
-      client_token: ""   // anti double submit
-    };
-
-    // helpers
-    const $ = sel => document.querySelector(sel);
-    const el = (t, cls) => { const n = document.createElement(t); if (cls) n.className = cls; return n; };
-    const show = id => {
-      ["step1","step2","step3","step4","done"].forEach(s => $( '#'+s ).hidden = (s!==id));
-      window.scrollTo({top:0, behavior:'smooth'});
-    };
-    const err = (id, msg="") => { const a=$(id); a.textContent = msg; a.style.display = msg? "block":"none"; };
-
-    // anti double submit token
-    function getToken() {
-      const uid = tg?.initDataUnsafe?.user?.id || 'anon';
-      return `${uid}_${Date.now()}`;
-    }
-
-    // --- loads table row ---
-    function loadRow(data={}){
-      const row = el('div','trow');
-      row.innerHTML = `
-        <input type="date" placeholder="MM/DD/YYYY" value="${data.date||''}">
-        <input type="text" placeholder="City, ST" value="${data.pickup||''}">
-        <input type="text" placeholder="City, ST" value="${data.delivery||''}">
-        <div class="switch"><label><input type="checkbox" ${data.partial?'checked':''}></label><span>Yes</span></div>
-        <div class="switch"><label><input type="checkbox" ${data.tarp?'checked':''}></label><span>Yes</span></div>
-        <button class="btn secondary" type="button">Remove</button>
-      `;
-      row.querySelector('button').onclick = () => row.remove();
-      return row;
-    }
-
-    // --- expense row ---
-    function expRow(data={}){
-      const row = el('div','trow');
-      row.style.gridTemplateColumns = '1fr 140px 86px';
-      row.style.minWidth = '420px';
-      row.innerHTML = `
-        <input type="text" placeholder="Name" value="${data.name||''}">
-        <input type="number" step="0.01" placeholder="0.00" value="${data.price||''}">
-        <button class="btn secondary" type="button">Remove</button>
-      `;
-      row.querySelector('button').onclick = () => row.remove();
-      return row;
-    }
-
-    // prepare first blank rows
-    $("#loadsTable").appendChild(loadRow());
-    $("#expTable").appendChild(expRow());
-
-    // add buttons
-    $("#addLoad").onclick = () => $("#loadsTable").appendChild(loadRow());
-    $("#addExp").onclick  = () => $("#expTable").appendChild(expRow());
-
-    // step 1 -> 2
-    $("#next1").onclick = () => {
-      state.trip.start_location = $("#start_location").value.trim();
-      state.trip.start_date     = $("#start_date").value;
-      state.trip.start_mileage  = $("#start_mileage").value.trim();
-      state.trip.finish_location= $("#finish_location").value.trim();
-      state.trip.finish_date    = $("#finish_date").value;
-      state.trip.finish_mileage = $("#finish_mileage").value.trim();
-
-      if(!state.trip.start_mileage || !state.trip.finish_mileage){
-        return err("#a1","Start mileage and Finish mileage are required.");
-      }
-      err("#a1","");
-      show("step2");
-    };
-    $("#toMenu1").onclick = () => location.href = "./";
-
-    // step 2 -> 3
-    $("#next2").onclick = () => {
-      // collect loads (only non-empty rows)
-      state.loads = [];
-      [...$("#loadsTable").querySelectorAll(".trow")].forEach(r=>{
-        const [date,pick,del,partial,tarp] = r.querySelectorAll("input");
-        const row = {
-          date: date.value,
-          pickup: pick.value.trim(),
-          delivery: del.value.trim(),
-          partial: partial.checked || false,
-          tarp: tarp.checked || false
-        };
-        if(row.date || row.pickup || row.delivery || row.partial || row.tarp){
-          state.loads.push(row);
-        }
+    `).join('');
+    // bind
+    wrap.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('input', e=>{
+        const i = Number(e.target.dataset.idx);
+        const k = e.target.dataset.key;
+        const v = (k==='price') ? (e.target.value===''?null:Number(e.target.value)) : e.target.value;
+        state.expenses[i][k]=v;
       });
-      show("step3");
-    };
-    $("#back2").onclick = () => show("step1");
+    });
+  }
 
-    // step 3 -> 4
-    $("#next3").onclick = () => {
-      state.expenses = [];
-      [...$("#expTable").querySelectorAll(".trow")].forEach(r=>{
-        const [name, price] = r.querySelectorAll("input");
-        const row = {
-          name: name.value.trim(),
-          price: price.value ? Number(price.value) : 0
-        };
-        if(row.name || row.price>0){ state.expenses.push(row); }
+  // ==== REVIEW ====
+  function renderReview(){
+    saveCurrentLoad(); // финальный сейв текущей карточки
+    const pruned = prunePayload(buildPayload());
+    document.getElementById('reviewBox').textContent = JSON.stringify(pruned, null, 2);
+  }
+
+  // ==== SUBMIT ====
+  let inFlight = false;
+  async function submitTrip(){
+    if (inFlight) return;
+    inFlight = true;
+    document.getElementById('submitBtn').disabled = true;
+
+    const payload = buildPayload();
+    try{
+      const res = await fetch(WEBHOOK_URL, {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify(payload),
       });
-      buildReview(); // only user-entered fields
-      show("step4");
-    };
-    $("#back3").onclick = () => show("step2");
-
-    // Build nice review (ONLY filled values)
-    function buildReview(){
-      const wrap = $("#review");
-      wrap.innerHTML = "";
-
-      const t = state.trip;
-      const s1 = el('div');
-      s1.innerHTML = `
-        <h3>Trip</h3>
-        <ul class="list">
-          ${t.start_location? `<li><b>Start:</b> ${t.start_location}${t.start_date?` — ${t.start_date}`:''}, mileage: <b>${t.start_mileage}</b></li>` : `<li><b>Start mileage:</b> ${t.start_mileage}</li>`}
-          ${t.finish_location? `<li><b>Finish:</b> ${t.finish_location}${t.finish_date?` — ${t.finish_date}`:''}, mileage: <b>${t.finish_mileage}</b></li>` : `<li><b>Finish mileage:</b> ${t.finish_mileage}</li>`}
-        </ul>`;
-      wrap.appendChild(s1);
-
-      if(state.loads.length){
-        const s2 = el('div');
-        s2.innerHTML = `<h3>Loads</h3>`;
-        const ul = el('ul','list');
-        state.loads.forEach((l,i)=>{
-          const line = [
-            l.date ? `${l.date}:` : null,
-            (l.pickup||"").trim(),
-            (l.delivery||"").trim() ? `→ ${l.delivery.trim()}` : null,
-            l.partial ? "(partial)" : null,
-            l.tarp ? "(tarp)" : null,
-          ].filter(Boolean).join(' ');
-          const li = el('li'); li.textContent = line || `Load #${i+1}`;
-          ul.appendChild(li);
-        });
-        s2.appendChild(ul);
-        wrap.appendChild(s2);
-      }
-
-      if(state.expenses.length){
-        const s3 = el('div');
-        s3.innerHTML = `<h3>Expenses</h3>`;
-        const ul = el('ul','list');
-        state.expenses.forEach(e=>{
-          const li = el('li');
-          li.textContent = `${e.name || 'Expense'} — $${(e.price||0).toFixed(2)}`;
-          ul.appendChild(li);
-        });
-        s3.appendChild(ul);
-        wrap.appendChild(s3);
-      }
+      if(!res.ok) throw new Error('Server error');
+      document.getElementById('result').className='ok';
+      document.getElementById('result').textContent='Thanks! Your trip was submitted.';
+    }catch(err){
+      document.getElementById('result').className='err';
+      document.getElementById('result').textContent='Submit failed. Try again.';
+      document.getElementById('submitBtn').disabled = false;
+      inFlight = false;
+      return;
     }
+  }
 
-    $("#back4").onclick = () => show("step3");
-
-    // Submit
-    let inFlight = false;
-    $("#submitBtn").onclick = async () => {
-      if(inFlight) return;
-      inFlight = true;
-
-      err("#a4","");
-      const meta = {
+  // ==== HELPERS ====
+  function buildPayload(){
+    // выключаем пустые loads/expenses на Review
+    const loads = (state.loads||[]).map(l=>({...l}));
+    const expenses = (state.expenses||[]).map(e=>({...e}));
+    return {
+      _tg_meta: {
         initData: tg?.initData || "",
         user: tg?.initDataUnsafe?.user || null
-      };
-      state.client_token = getToken();
-
-      const payload = {
-        _tg_meta: meta,
-        trip: state.trip,
-        loads: state.loads,
-        expenses: state.expenses,
-        client_token: state.client_token
-      };
-
-      // lock UI
-      $("#submitBtn").textContent = "Sending…";
-      $("#submitBtn").disabled = true;
-
-      try{
-        const res = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok) throw new Error("Upload failed");
-        show("done");
-      }catch(e){
-        err("#a4","Error. Please try again.");
-        $("#submitBtn").textContent = "Submit";
-        $("#submitBtn").disabled = false;
-        inFlight = false;
-      }
+      },
+      trip: {...state.trip},
+      loads,
+      expenses,
+      client_token: state.client_token
     };
+  }
 
-    // menu buttons
-    $("#toMenu1").onclick = () => location.href="./";
-    $("#toMenuDone").onclick = () => location.href="./";
-  </script>
+  function prunePayload(obj){
+    function isEmpty(val){
+      return val===null || val===undefined || (typeof val==='string' && val.trim()==='');
+    }
+    if (Array.isArray(obj)){
+      return obj.map(prunePayload).filter(x=>{
+        if (x && typeof x==='object' && !Array.isArray(x)) {
+          return Object.keys(x).length>0;
+        }
+        return !(x===null || x===undefined || x==='');
+      });
+    }
+    if (obj && typeof obj==='object'){
+      const out={};
+      for (const [k,v] of Object.entries(obj)){
+        const pv = prunePayload(v);
+        if (Array.isArray(pv) && pv.length===0) continue;
+        if (typeof pv==='object' && !Array.isArray(pv) && Object.keys(pv).length===0) continue;
+        if (!isEmpty(pv)) out[k]=pv;
+      }
+      return out;
+    }
+    return obj;
+  }
+
+  function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+
+  // init default
+  showStep('trip');
+</script>
 </body>
 </html>
