@@ -52,6 +52,12 @@
     h1 { font-size: 18px; line-height: 1.25; margin: 0; }
     .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
+    .alert {
+      display:none; margin-top:10px; padding:12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15); background: rgba(255,107,107,0.12);
+      color:#ffd7d7; font-size:13px;
+    }
+
     form { margin-top: 12px; }
     label { display:block; margin: 10px 0 6px; font-weight: 600; }
     input[type="file"]{
@@ -64,14 +70,12 @@
       margin-top: 14px; width: 100%; border-radius: 14px; padding: 14px 16px;
       border: 1px solid var(--stroke);
       background: var(--accent); color: var(--accentText);
-      font-weight: 700; cursor: pointer; transition: transform .12s ease; 
+      font-weight: 700; cursor: pointer; transition: transform .12s ease;
     }
     .btn:active { transform: translateY(1px); }
-    .btn[disabled] { opacity: .6; cursor: default; }
+    .btn[disabled] { opacity:.6; cursor: default; }
 
-    .secondary {
-      background: transparent; color: var(--text); margin-top: 10px;
-    }
+    .secondary { background: transparent; color: var(--text); margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -84,7 +88,9 @@
       </div>
     </div>
 
-    <form id="bolForm">
+    <div id="alert" class="alert"></div>
+
+    <form id="bolForm" autocomplete="off" enctype="multipart/form-data" novalidate>
       <label for="bol">BOL file(s)</label>
       <input id="bol" name="bol_file" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
       <div class="hint">PDF or images are fine. Multiple pages → select multiple files.</div>
@@ -98,24 +104,78 @@
     const tg = window.Telegram?.WebApp;
     tg?.ready(); tg?.expand();
 
-    // Твой прод Webhook n8n:
     const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/upload-bol";
+    const COOLDOWN_MS = 30_000; // 30s cooldown after an error
 
     const form = document.getElementById('bolForm');
     const submitBtn = document.getElementById('submit');
     const backBtn = document.getElementById('back');
+    const fileInput = document.getElementById('bol');
+    const alertBox = document.getElementById('alert');
 
     backBtn?.addEventListener('click', () => { location.href = "./"; });
 
-    let submittedOnce = false;
-    function setUploadingState(on) {
+    let inFlight = false;
+    let cooldownUntil = 0;
+    let cooldownTimer = null;
+
+    function lockForm(on) {
+      form.style.pointerEvents = on ? 'none' : 'auto';
+      form.style.opacity = on ? '0.85' : '1';
       submitBtn.disabled = on;
-      submitBtn.textContent = on ? 'Uploading…' : 'Submit';
+      fileInput.disabled = on;
+      backBtn.disabled = on;
     }
+
+    function setSubmitText(text) {
+      submitBtn.textContent = text;
+    }
+
+    function showError(msg) {
+      alertBox.textContent = msg;
+      alertBox.style.display = 'block';
+    }
+    function hideError() {
+      alertBox.style.display = 'none';
+      alertBox.textContent = '';
+    }
+
+    function startCooldown(ms) {
+      cooldownUntil = Date.now() + ms;
+      lockForm(true);
+      tickCooldown();
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      cooldownTimer = setInterval(tickCooldown, 250);
+    }
+
+    function tickCooldown() {
+      const left = Math.max(0, cooldownUntil - Date.now());
+      if (left <= 0) {
+        clearInterval(cooldownTimer); cooldownTimer = null;
+        cooldownUntil = 0;
+        hideError();
+        setSubmitText('Submit');
+        lockForm(false);
+        return;
+      }
+      const s = Math.ceil(left / 1000);
+      setSubmitText(`Wait ${s}s`);
+      showError('Error. Please try again in 30 seconds.');
+    }
+
+    // блокируем повторные клики по кнопке, пока отправка идёт
+    submitBtn.addEventListener('click', (e) => {
+      if (inFlight || cooldownUntil > Date.now()) { e.preventDefault(); e.stopPropagation(); }
+    }, { capture: true });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (submittedOnce) return; // простая защита от повторного клика
+      if (inFlight || cooldownUntil > Date.now()) return;
+
+      hideError();
+      inFlight = true;
+      lockForm(true);
+      setSubmitText('Uploading…');
 
       const meta = {
         initData: tg?.initData || "",
@@ -126,13 +186,10 @@
       fd.append("_tg_meta", JSON.stringify(meta));
 
       try {
-        submittedOnce = true;
-        setUploadingState(true);
-
         const res = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
         if (!res.ok) throw new Error('Upload failed');
 
-        // Прячем форму и показываем "спасибо"
+        // успех: показываем Thanks и удаляем форму
         const container = form.parentElement;
         form.remove();
 
@@ -145,14 +202,14 @@
         container.appendChild(done);
         document.getElementById('back2')?.addEventListener('click', () => location.href = "./");
 
-        // Можно закрыть мини-апп сразу:
-        // tg?.close?.();
+        // tg?.close?.(); // можно закрыть мини-апп сразу
       } catch (err) {
-        submittedOnce = false; // разрешим повтор, если ошибка
-        setUploadingState(false);
-        tg?.showAlert?.('Error. Please try again.');
+        // ошибка: запускаем локальный кулдаун на 30 секунд
+        startCooldown(COOLDOWN_MS);
+      } finally {
+        inFlight = false;
       }
-    });
+    }, { passive: false });
   </script>
 </body>
 </html>
