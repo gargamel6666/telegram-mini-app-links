@@ -67,6 +67,7 @@
       font-weight: 700; cursor: pointer; transition: transform .12s ease; 
     }
     .btn:active { transform: translateY(1px); }
+    .btn[disabled] { opacity: .6; cursor: default; }
 
     .secondary {
       background: transparent; color: var(--text); margin-top: 10px;
@@ -88,7 +89,7 @@
       <input id="bol" name="bol_file" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
       <div class="hint">PDF or images are fine. Multiple pages → select multiple files.</div>
 
-      <button class="btn" type="submit">Submit</button>
+      <button class="btn" type="submit" id="submit">Submit</button>
       <button class="btn secondary" type="button" id="back">Back to menu</button>
     </form>
   </main>
@@ -97,32 +98,59 @@
     const tg = window.Telegram?.WebApp;
     tg?.ready(); tg?.expand();
 
-    // TODO: заменим на реальный n8n webhook на следующем шаге
+    // Твой прод Webhook n8n:
     const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/upload-bol";
 
-    document.getElementById('back')?.addEventListener('click', () => {
-      // вернуться к главному меню (index.html)
-      location.href = "./";
-    });
+    const form = document.getElementById('bolForm');
+    const submitBtn = document.getElementById('submit');
+    const backBtn = document.getElementById('back');
 
-    document.getElementById('bolForm').addEventListener('submit', async (e) => {
+    backBtn?.addEventListener('click', () => { location.href = "./"; });
+
+    let submittedOnce = false;
+    function setUploadingState(on) {
+      submitBtn.disabled = on;
+      submitBtn.textContent = on ? 'Uploading…' : 'Submit';
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
+      if (submittedOnce) return; // простая защита от повторного клика
 
-      // Добавим Telegram-метаданные (для связи по user.id вместо Full Name)
       const meta = {
         initData: tg?.initData || "",
-        user: tg?.initDataUnsafe?.user || null   // {id, first_name, last_name, username, ...}
+        user: tg?.initDataUnsafe?.user || null
       };
+
+      const fd = new FormData(form);
       fd.append("_tg_meta", JSON.stringify(meta));
 
       try {
+        submittedOnce = true;
+        setUploadingState(true);
+
         const res = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Upload failed");
-        tg?.showAlert?.("Thanks! Your BOL was received.");
-        tg?.close?.();
+        if (!res.ok) throw new Error('Upload failed');
+
+        // Прячем форму и показываем "спасибо"
+        const container = form.parentElement;
+        form.remove();
+
+        const done = document.createElement('div');
+        done.innerHTML = `
+          <div style="margin-top:8px;font-size:15px;font-weight:700;">Thanks!</div>
+          <div style="color:var(--muted);font-size:12px;margin-top:4px;">Your BOL has been submitted.</div>
+          <button class="btn secondary" id="back2" type="button" style="margin-top:14px;">Back to menu</button>
+        `;
+        container.appendChild(done);
+        document.getElementById('back2')?.addEventListener('click', () => location.href = "./");
+
+        // Можно закрыть мини-апп сразу:
+        // tg?.close?.();
       } catch (err) {
-        tg?.showAlert?.("Error. Please try again.");
+        submittedOnce = false; // разрешим повтор, если ошибка
+        setUploadingState(false);
+        tg?.showAlert?.('Error. Please try again.');
       }
     });
   </script>
