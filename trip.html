@@ -4,42 +4,44 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Trip report</title>
-<!-- Telegram WebApp SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
     --bg:#0f1115; --card:#1a1f2b; --muted:#8fa0b9; --text:#e7edf7;
     --primary:#3b82f6; --primary-600:#2563eb; --err:#f43f5e;
-    --radius:16px;
   }
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:16px/1.35 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Inter,Arial;}
   .wrap{max-width:720px;margin:0 auto;padding:20px 16px 32px;}
-  h1{margin:0 0 8px 0;font-size:28px}
-  .sub{color:var(--muted);margin:0 0 18px 0}
   .section{background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);padding:16px;border-radius:24px;border:1px solid rgba(255,255,255,.06);box-shadow:0 8px 32px rgba(0,0,0,.35)}
   .title{font-weight:700;font-size:22px;margin:0 0 6px}
   .hint{color:var(--muted);margin:0 0 16px}
-  .row{display:flex;gap:12px}
-  .gap{margin-top:12px}
   .grid{display:grid;gap:12px}
   .grid-2{grid-template-columns:1fr 1fr}
-  .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:14px}
+  .card{background:#151925;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px}
   label{display:block;margin:4px 2px 6px 2px;color:var(--muted);font-size:13px}
-  input,select,textarea{
-    width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);
-    background:#151925;color:var(--text);border-radius:14px;
-    padding:14px 14px;outline:none;font-size:16px
-  }
+  input{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);background:#0f1422;color:var(--text);border-radius:14px;padding:14px 14px;font-size:16px}
   input[type="date"]{appearance:none;-webkit-appearance:none}
   .btn{background:var(--primary);color:white;border:none;border-radius:14px;padding:14px 18px;font-weight:600}
   .btn:active{transform:translateY(1px)}
   .ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text)}
-  .err{color:var(--err);margin:6px 2px 0 2px;font-size:14px}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
   .chip{background:#0e1423;border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:999px;padding:8px 12px;font-weight:600}
+  .row{display:flex;gap:12px}
   .footer{display:flex;gap:12px;justify-content:space-between;margin-top:16px}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px;background:#0c0f17;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;white-space:pre-wrap}
+  .err{color:var(--err);margin:6px 2px 0 2px;font-size:14px}
   [hidden]{display:none !important}
+
+  /* review pretty view */
+  .review-block{margin-top:12px}
+  .rv-title{font-weight:700;margin:6px 0 8px}
+  .kv{border:1px solid rgba(255,255,255,.08);background:#0f1422;border-radius:14px;overflow:hidden}
+  .kv-row{display:flex;gap:12px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.06)}
+  .kv-row:first-child{border-top:none}
+  .kv-k{min-width:140px;color:var(--muted)}
+  .rv-load{margin-top:10px}
+  details.mono{margin-top:12px}
+  details summary{cursor:pointer;color:var(--muted)}
+  .mono pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0b0f18;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;color:#cfe2ff}
 </style>
 </head>
 <body>
@@ -100,7 +102,7 @@
 
     <div id="loads_err" class="err" hidden></div>
 
-    <div class="row gap">
+    <div class="row" style="margin-top:12px">
       <button class="btn ghost" type="button" onclick="removeCurrentLoad()">Remove load</button>
       <button class="btn" type="button" onclick="addLoad()">+ Add load</button>
     </div>
@@ -117,7 +119,7 @@
     <p class="hint">Add rows as needed.</p>
 
     <div id="expenseList"></div>
-    <div class="row gap">
+    <div class="row" style="margin-top:12px">
       <button class="btn" type="button" onclick="addExpense()">+ Add expense</button>
     </div>
 
@@ -130,7 +132,12 @@
   <!-- STEP 4: Review -->
   <section id="step_review" class="section" hidden>
     <div class="title">Review & submit</div>
-    <div id="reviewBox" class="mono"></div>
+    <div id="reviewBox" class="review-block"></div>
+
+    <details class="mono">
+      <summary>Show raw JSON</summary>
+      <pre id="rawJson"></pre>
+    </details>
 
     <div id="submit_err" class="err" hidden></div>
 
@@ -144,21 +151,13 @@
 
 <script>
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-  tg.MainButton.hide();
-}
+if (tg){ tg.ready(); tg.expand(); tg.MainButton.hide(); }
 
 const WEBHOOK_URL = 'https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235';
 
-// ---------- STATE ----------
 const state = {
   step:'trip',
-  trip:{
-    start_location:'', start_date:'', start_mileage:'',
-    finish_location:'', finish_date:'', finish_mileage:''
-  },
+  trip:{ start_location:'', start_date:'', start_mileage:'', finish_location:'', finish_date:'', finish_mileage:'' },
   loads:[],
   expenses:[],
   currentLoadIndex:0,
@@ -166,108 +165,65 @@ const state = {
 };
 
 function showStep(id){
-  ['trip','loads','expenses','review'].forEach(s=>{
-    document.getElementById('step_'+s).hidden = (s!==id);
-  });
-  state.step = id;
+  ['trip','loads','expenses','review'].forEach(s=>document.getElementById('step_'+s).hidden = (s!==id));
+  state.step=id;
   if (id==='loads') renderLoads();
   if (id==='expenses') renderExpenses();
   if (id==='review') renderReview();
 }
-
 function backToMenu(){ if (tg) tg.close(); }
 
-// ---------- Trip ----------
+// Trip
 function saveTripFromInputs(){
-  state.trip.start_location = document.getElementById('start_location').value.trim();
-  state.trip.start_date     = document.getElementById('start_date').value;
-  state.trip.start_mileage  = document.getElementById('start_mileage').value;
-
-  state.trip.finish_location= document.getElementById('finish_location').value.trim();
-  state.trip.finish_date    = document.getElementById('finish_date').value;
-  state.trip.finish_mileage = document.getElementById('finish_mileage').value;
+  state.trip.start_location=document.getElementById('start_location').value.trim();
+  state.trip.start_date=document.getElementById('start_date').value;
+  state.trip.start_mileage=document.getElementById('start_mileage').value;
+  state.trip.finish_location=document.getElementById('finish_location').value.trim();
+  state.trip.finish_date=document.getElementById('finish_date').value;
+  state.trip.finish_mileage=document.getElementById('finish_mileage').value;
 }
-
 function validateTrip(){
   saveTripFromInputs();
-  const e = document.getElementById('trip_err');
-  const s = state.trip;
-  if (s.start_mileage === '' || s.finish_mileage === '') {
-    e.textContent = 'Start mileage and Finish mileage are required.';
-    e.hidden = false;
-    return false;
-  }
-  e.hidden = true;
-  return true;
+  const e=document.getElementById('trip_err');
+  if (state.trip.start_mileage===''||state.trip.finish_mileage===''){ e.textContent='Start mileage and Finish mileage are required.'; e.hidden=false; return false; }
+  e.hidden=true; return true;
 }
 
-// ---------- Loads UI ----------
-function addLoad(){
-  saveCurrentLoad();
-  state.loads.push({ date:'', pickup:'', delivery:'', partial:'', tarp:'' });
-  state.currentLoadIndex = state.loads.length-1;
-  renderLoads();
-}
+// Loads
+function addLoad(){ saveCurrentLoad(); state.loads.push({date:'',pickup:'',delivery:'',partial:'',tarp:''}); state.currentLoadIndex=state.loads.length-1; renderLoads(); }
 function removeCurrentLoad(){
   saveCurrentLoad();
-  if (state.loads.length<=1){ // всегда держим хотя бы 1 карточку
-    state.loads[0] = { date:'', pickup:'', delivery:'', partial:'', tarp:'' };
-    state.currentLoadIndex = 0;
-  } else {
-    state.loads.splice(state.currentLoadIndex,1);
-    state.currentLoadIndex = Math.max(0, state.currentLoadIndex-1);
-  }
+  if (state.loads.length<=1){ state.loads[0]={date:'',pickup:'',delivery:'',partial:'',tarp:''}; state.currentLoadIndex=0; }
+  else { state.loads.splice(state.currentLoadIndex,1); state.currentLoadIndex=Math.max(0,state.currentLoadIndex-1); }
   renderLoads();
 }
 function saveCurrentLoad(){
-  const i = state.currentLoadIndex;
-  const wrap = document.getElementById('loadCard');
-  if (!wrap || state.loads.length===0) return;
-  const L = state.loads[i] || (state.loads[i]={});
-  L.date     = wrap.querySelector('[name="date"]')?.value || '';
-  L.pickup   = wrap.querySelector('[name="pickup"]')?.value.trim() || '';
-  L.delivery = wrap.querySelector('[name="delivery"]')?.value.trim() || '';
-  L.partial  = wrap.querySelector('[name="partial"]')?.value || '';
-  L.tarp     = wrap.querySelector('[name="tarp"]')?.value || '';
+  const i=state.currentLoadIndex, wrap=document.getElementById('loadCard'); if (!wrap||state.loads.length===0) return;
+  const L=state.loads[i]||(state.loads[i]={});
+  L.date=wrap.querySelector('[name="date"]')?.value||'';
+  L.pickup=wrap.querySelector('[name="pickup"]')?.value.trim()||'';
+  L.delivery=wrap.querySelector('[name="delivery"]')?.value.trim()||'';
+  L.partial=wrap.querySelector('[name="partial"]')?.value||'';
+  L.tarp=wrap.querySelector('[name="tarp"]')?.value||'';
 }
 function isLoadFilled(L){
-  const hasText = (s) => s && String(s).trim().length>0;
-  const hasNum  = (v) => v!==null && v!=='' && !Number.isNaN(Number(v));
-  return hasText(L.pickup) || hasText(L.delivery) || hasText(L.date) || hasNum(L.partial) || hasNum(L.tarp);
+  const hasT=(s)=>s&&String(s).trim().length>0, hasN=(v)=>v!==''&&!Number.isNaN(Number(v));
+  return hasT(L.pickup)||hasT(L.delivery)||hasT(L.date)||hasN(L.partial)||hasN(L.tarp);
 }
 function validateLoads(){
   saveCurrentLoad();
-  const err = document.getElementById('loads_err');
-  if (state.loads.length===0){
-    err.textContent = 'Add at least 1 load.';
-    err.hidden = false; return false;
-  }
-  const ok = state.loads.some(isLoadFilled);
-  if (!ok){
-    err.textContent = 'Please fill at least one field in Load 1 (e.g., Pickup, Delivery or Date).';
-    err.hidden = false; return false;
-  }
-  err.hidden = true; return true;
+  const err=document.getElementById('loads_err');
+  if (state.loads.length===0){ err.textContent='Add at least 1 load.'; err.hidden=false; return false; }
+  if (!state.loads.some(isLoadFilled)){ err.textContent='Please fill at least one field in Load 1 (e.g., Pickup, Delivery or Date).'; err.hidden=false; return false; }
+  err.hidden=true; return true;
 }
 function renderLoads(){
-  // initial at least one
-  if (state.loads.length===0){ state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}]; }
-  const chips = document.getElementById('loadChips');
-  chips.innerHTML = '';
-  state.loads.forEach((_,idx)=>{
-    const b = document.createElement('button');
-    b.type='button';
-    b.className='chip';
-    b.textContent=`Load ${idx+1}`;
-    if (idx===state.currentLoadIndex) b.style.background= 'var(--primary)';
-    b.onclick=()=>{ saveCurrentLoad(); state.currentLoadIndex=idx; renderLoads(); };
-    chips.appendChild(b);
-  });
+  if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
+  const chips=document.getElementById('loadChips'); chips.innerHTML='';
+  state.loads.forEach((_,idx)=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=`Load ${idx+1}`; if (idx===state.currentLoadIndex) b.style.background='var(--primary)'; b.onclick=()=>{ saveCurrentLoad(); state.currentLoadIndex=idx; renderLoads(); }; chips.appendChild(b); });
 
-  const i = state.currentLoadIndex;
-  const L = state.loads[i];
-  const card = document.getElementById('loadCard');
-  card.innerHTML = `
+  const i=state.currentLoadIndex, L=state.loads[i]; const card=document.getElementById('loadCard');
+  card.innerHTML=`
     <div class="grid">
       <div>
         <label>Date</label>
@@ -275,11 +231,11 @@ function renderLoads(){
       </div>
       <div>
         <label>Pickup location</label>
-        <input name="pickup" placeholder="City, ST" value="${escapeHtml(L.pickup||'')}">
+        <input name="pickup" placeholder="City, ST" value="${esc(L.pickup||'')}">
       </div>
       <div>
         <label>Delivery location</label>
-        <input name="delivery" placeholder="City, ST" value="${escapeHtml(L.delivery||'')}">
+        <input name="delivery" placeholder="City, ST" value="${esc(L.delivery||'')}">
       </div>
       <div class="grid grid-2">
         <div>
@@ -291,142 +247,139 @@ function renderLoads(){
           <input type="number" min="0" step="1" name="tarp" value="${L.tarp||''}">
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
-// ---------- Expenses UI ----------
-function addExpense(){
-  state.expenses.push({ name:'', price:'' });
-  renderExpenses();
-}
-function removeExpense(i){
-  state.expenses.splice(i,1);
-  renderExpenses();
-}
+// Expenses
+function addExpense(){ state.expenses.push({name:'',price:''}); renderExpenses(); }
+function removeExpense(i){ state.expenses.splice(i,1); renderExpenses(); }
 function renderExpenses(){
-  const box = document.getElementById('expenseList');
-  if (state.expenses.length===0) state.expenses=[{name:'',price:''}];
-  box.innerHTML='';
-  state.expenses.forEach((ex,idx)=>{
-    const row = document.createElement('div');
-    row.className='card';
-    row.innerHTML = `
-      <div class="grid grid-2">
-        <div>
-          <label>Name</label>
-          <input value="${escapeHtml(ex.name||'')}" oninput="state.expenses[${idx}].name=this.value">
-        </div>
-        <div>
-          <label>Price</label>
-          <input type="number" min="0" step="0.01" value="${ex.price||''}" oninput="state.expenses[${idx}].price=this.value">
-        </div>
+  const box=document.getElementById('expenseList'); if (state.expenses.length===0) state.expenses=[{name:'',price:''}]; box.innerHTML='';
+  state.expenses.forEach((ex,idx)=>{ const row=document.createElement('div'); row.className='card'; row.innerHTML=`
+    <div class="grid grid-2">
+      <div>
+        <label>Name</label>
+        <input value="${esc(ex.name||'')}" oninput="state.expenses[${idx}].name=this.value">
       </div>
-      <div class="row gap">
-        <button class="btn ghost" type="button" onclick="removeExpense(${idx})">Remove</button>
+      <div>
+        <label>Price</label>
+        <input type="number" min="0" step="0.01" value="${ex.price||''}" oninput="state.expenses[${idx}].price=this.value">
       </div>
-    `;
-    box.appendChild(row);
-  });
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost" type="button" onclick="removeExpense(${idx})">Remove</button>
+    </div>`; box.appendChild(row); });
 }
 
-// ---------- Navigation with validation ----------
+// Navigation
 function goStep(id){
-  if (id==='loads'     && !validateTrip())   return;
-  if ((id==='expenses' || id==='review') && !validateLoads()) return;
+  if (id==='loads' && !validateTrip()) return;
+  if ((id==='expenses'||id==='review') && !validateLoads()) return;
   showStep(id);
 }
 
-// ---------- Review ----------
+// Review
 function renderReview(){
-  saveTripFromInputs();
-  saveCurrentLoad();
+  saveTripFromInputs(); saveCurrentLoad();
   const payload = buildPayload(true);
-  document.getElementById('reviewBox').textContent = JSON.stringify(payload, null, 2);
+  // pretty view:
+  const rv = [];
+  const u = payload._tg_meta?.user;
+  if (u){
+    rv.push(`<div class="rv-title">User</div>
+      <div class="kv">
+        <div class="kv-row"><div class="kv-k">Telegram</div><div>@${esc(u.username||'')}</div></div>
+        <div class="kv-row"><div class="kv-k">User ID</div><div>${u.id||''}</div></div>
+      </div>`);
+  }
+
+  // Trip
+  const t = payload.trip||{};
+  const tripRows = [];
+  if (t.start_location) tripRows.push(row('Start location', t.start_location));
+  if (t.start_date)     tripRows.push(row('Start date', t.start_date));
+  tripRows.push(row('Start mileage', t.start_mileage));
+  if (t.finish_location)tripRows.push(row('Finish location', t.finish_location));
+  if (t.finish_date)    tripRows.push(row('Finish date', t.finish_date));
+  tripRows.push(row('Finish mileage', t.finish_mileage));
+  rv.push(`<div class="rv-title">Trip</div><div class="kv">${tripRows.join('')}</div>`);
+
+  // Loads
+  const loads = payload.loads||[];
+  if (loads.length){
+    rv.push(`<div class="rv-title">Loads (${loads.length})</div>`);
+    loads.forEach((L, idx)=>{
+      const Lrows=[];
+      if (L.date)     Lrows.push(row('Date', L.date));
+      if (L.pickup)   Lrows.push(row('Pickup', L.pickup));
+      if (L.delivery) Lrows.push(row('Delivery', L.delivery));
+      if (L.partial!=='' && L.partial!=null) Lrows.push(row('Partial (qty)', L.partial));
+      if (L.tarp!=='' && L.tarp!=null)       Lrows.push(row('Tarp (qty)', L.tarp));
+      rv.push(`<div class="kv rv-load"><div class="kv-row"><div class="kv-k">Load</div><div>#${idx+1}</div></div>${Lrows.join('')}</div>`);
+    });
+  }
+
+  // Expenses
+  const exps = (payload.expenses||[]).filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))));
+  if (exps.length){
+    rv.push(`<div class="rv-title">Expenses (${exps.length})</div>`);
+    exps.forEach((e,idx)=> rv.push(`<div class="kv rv-load">
+      <div class="kv-row"><div class="kv-k">Item</div><div>#${idx+1}</div></div>
+      ${e.name?row('Name',e.name):''}
+      ${e.price!==''?row('Price',e.price):''}
+    </div>`));
+  }
+
+  document.getElementById('reviewBox').innerHTML = rv.join('');
+  document.getElementById('rawJson').textContent = JSON.stringify(payload,null,2);
+
+  function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div>${esc(String(v))}</div></div>`; }
 }
 
-// ---------- Payload ----------
+// Payload
 function buildPayload(forPreview=false){
   const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : null;
   const meta = tg ? { initData: tg.initData || '', user } : {};
   const client_token = `${user?.id||'anon'}_${Date.now()}`;
 
-  // фильтруем пустые лоуды в превью/отправке, но валидатор уже не пустит
   const loads = state.loads.filter(isLoadFilled);
   const expenses = state.expenses.filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))) );
 
-  const out = {
-    _tg_meta: meta,
-    trip: { ...state.trip },
-    loads,
-    expenses,
-    client_token
-  };
+  const out = { _tg_meta: meta, trip: { ...state.trip }, loads, expenses, client_token };
   if (!forPreview) state.client_token = client_token;
   return out;
 }
 
-// ---------- Submit ----------
-let inFlight = false;
-
+// Submit + dedupe
+let inFlight=false;
 function localKey(userId){ return `trip_submit_lock_${userId}`; }
-
 async function submitTrip(){
   if (inFlight) return;
   if (!validateTrip() || !validateLoads()) return;
 
   const userId = tg?.initDataUnsafe?.user?.id || 'anon';
-  // простая защита от дублей на 2 минуты
-  const lk = localKey(userId);
-  const last = Number(localStorage.getItem(lk)||'0');
-  const now = Date.now();
-  if (now - last < 120000){
-    showSubmitError('You have recently submitted a trip. Please try again in a minute.');
-    return;
-  }
+  const lk = localKey(userId), last = Number(localStorage.getItem(lk)||'0'), now = Date.now();
+  if (now-last<120000){ showSubmitError('You have recently submitted a trip. Please try again in a minute.'); return; }
 
   const payload = buildPayload(false);
-  clearSubmitError();
-  lockSubmit(true);
-
+  clearSubmitError(); lockSubmit(true);
   try{
-    const res = await fetch(WEBHOOK_URL, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok){
-      const t = await res.text();
-      throw new Error(`HTTP ${res.status}: ${t}`);
-    }
-    localStorage.setItem(lk, String(now));
-    if (tg){ tg.showPopup({message:'Submitted! Thank you.'}); tg.close(); }
-    else alert('Submitted!');
-  }catch(err){
-    showSubmitError(err.message||'Submit error');
-  }finally{
-    lockSubmit(false);
-  }
+    const res = await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if (!res.ok){ throw new Error(`HTTP ${res.status}: ${await res.text()}`); }
+    localStorage.setItem(lk,String(now));
+    if (tg){ tg.showPopup({message:'Submitted! Thank you.'}); tg.close(); } else alert('Submitted!');
+  }catch(e){ showSubmitError(e.message||'Submit error'); }
+  finally{ lockSubmit(false); }
 }
+function lockSubmit(on){ inFlight=on; const b=document.getElementById('submitBtn'); b.disabled=on; b.textContent=on?'Submitting…':'Submit'; }
+function showSubmitError(msg){ const e=document.getElementById('submit_err'); e.textContent=msg; e.hidden=false; }
+function clearSubmitError(){ document.getElementById('submit_err').hidden=true; }
 
-function lockSubmit(on){
-  inFlight = on;
-  const b = document.getElementById('submitBtn');
-  b.disabled = on;
-  b.textContent = on ? 'Submitting…' : 'Submit';
-}
-function showSubmitError(msg){
-  const e = document.getElementById('submit_err');
-  e.textContent = msg; e.hidden = false;
-}
-function clearSubmitError(){ document.getElementById('submit_err').hidden = true; }
+// utils
+function esc(s){return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
 
-// ---------- Utils ----------
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-
-// Init defaults
-(function init(){
-  // at least one empty load exists
+// init
+(function(){
   if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
   renderLoads();
 })();
