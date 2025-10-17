@@ -54,7 +54,14 @@
       width: 100%; padding: 12px 12px;
       border-radius: 12px; border: 1px solid var(--stroke);
       background: rgba(255,255,255,.05); color: var(--text);
-      font-size: 15px;
+      font-size: 15px; line-height: 1.2;
+    }
+    /* одинаковая ширина/внешний вид дат на iOS */
+    input[type="date"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; padding: 12px 12px; min-height: 46px;
+      background-position: right 12px center;
+      background-repeat: no-repeat;
     }
     input[type="number"] { -moz-appearance:textfield; }
     input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -140,7 +147,7 @@
     </div>
   </section>
 
-  <!-- STEP 2: Loads (cards + chips) -->
+  <!-- STEP 2: Loads -->
   <section id="step-loads" class="step" hidden>
     <h3>Loads</h3>
     <p class="muted">Add rows as needed.</p>
@@ -195,8 +202,8 @@
   const tg = window.Telegram?.WebApp;
   tg?.ready(); tg?.expand();
 
-  // ==== CONFIG ====
-  const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235"; // поменяй при необходимости
+  // === YOUR WEBHOOK ===
+  const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235";
 
   // ==== STATE ====
   const state = {
@@ -209,7 +216,7 @@
     client_token: ''
   };
 
-  // token для дедупликации на сервере
+  // token для дедупликации
   (function buildClientToken(){
     const u = tg?.initDataUnsafe?.user?.id || 'anon';
     const auth = (new URLSearchParams(tg?.initData || '')).get('auth_date') || Date.now();
@@ -237,7 +244,9 @@
     const start_m = Number(document.getElementById('start_mileage').value);
     const finish_m = Number(document.getElementById('finish_mileage').value);
 
-    if (Number.isNaN(start_m) || Number.isNaN(finish_m) || document.getElementById('start_mileage').value==='' || document.getElementById('finish_mileage').value==='') {
+    if (Number.isNaN(start_m) || Number.isNaN(finish_m) ||
+        document.getElementById('start_mileage').value==='' ||
+        document.getElementById('finish_mileage').value==='') {
       tripErr.textContent = 'Start mileage and Finish mileage are required.';
       tripErr.hidden = false; return false;
     }
@@ -260,7 +269,7 @@
 
   function ensureLoadsInit(){
     if (!Array.isArray(state.loads)) state.loads = [];
-    if (state.loads.length === 0) state.loads.push(blankLoad());
+    if (state.loads.length === 0) state.loads.push(blankLoad()); // гарантируем минимум 1
     currentLoad = Math.min(currentLoad, state.loads.length-1);
     renderLoads();
   }
@@ -272,10 +281,12 @@
     renderLoads();
   }
   function removeCurrentLoad(){
-    if (state.loads.length === 0) return;
+    if (state.loads.length <= 1) { // минимум 1 load
+      alert('At least 1 load is required.');
+      return;
+    }
     state.loads.splice(currentLoad,1);
     currentLoad = Math.max(0, currentLoad-1);
-    if (state.loads.length === 0) state.loads.push(blankLoad());
     renderLoads();
   }
   function goToLoad(i){ saveCurrentLoad(); currentLoad = i; renderLoads(); }
@@ -303,7 +314,7 @@
     const L = state.loads[currentLoad];
     document.getElementById('loadCard').innerHTML = `
       <form id="loadForm" class="grid2">
-        <div class="field">
+        <div class="field" style="grid-column: 1 / -1;">
           <label>Date</label>
           <input name="date" type="date" value="${esc(L.date)}">
         </div>
@@ -362,7 +373,7 @@
 
   // ==== REVIEW ====
   function renderReview(){
-    saveCurrentLoad(); // финальный сейв текущей карточки
+    saveCurrentLoad();
     const pruned = prunePayload(buildPayload());
     document.getElementById('reviewBox').textContent = JSON.stringify(pruned, null, 2);
   }
@@ -371,8 +382,16 @@
   let inFlight = false;
   async function submitTrip(){
     if (inFlight) return;
+
+    // обязательный минимум 1 load
+    if (!state.loads || state.loads.length === 0) {
+      showErr('Add at least 1 load before submitting.');
+      return;
+    }
+
     inFlight = true;
-    document.getElementById('submitBtn').disabled = true;
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
 
     const payload = buildPayload();
     try{
@@ -382,20 +401,20 @@
         body: JSON.stringify(payload),
       });
       if(!res.ok) throw new Error('Server error');
-      document.getElementById('result').className='ok';
-      document.getElementById('result').textContent='Thanks! Your trip was submitted.';
+      showOk('Thanks! Your trip was submitted.');
     }catch(err){
-      document.getElementById('result').className='err';
-      document.getElementById('result').textContent='Submit failed. Try again.';
-      document.getElementById('submitBtn').disabled = false;
+      showErr('Submit failed. Try again.');
+      btn.disabled = false;
       inFlight = false;
       return;
     }
   }
 
+  function showOk(msg){ const n=document.getElementById('result'); n.className='ok'; n.textContent=msg; }
+  function showErr(msg){ const n=document.getElementById('result'); n.className='err'; n.textContent=msg; }
+
   // ==== HELPERS ====
   function buildPayload(){
-    // выключаем пустые loads/expenses на Review
     const loads = (state.loads||[]).map(l=>({...l}));
     const expenses = (state.expenses||[]).map(e=>({...e}));
     return {
@@ -437,7 +456,7 @@
 
   function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
 
-  // init default
+  // init
   showStep('trip');
 </script>
 </body>
